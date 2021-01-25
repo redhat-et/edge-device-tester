@@ -1,0 +1,3 @@
+resources:
+- fetch-asset.yaml
+- generate-containerdisk-containerfile.yaml

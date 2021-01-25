@@ -1,0 +1,46 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: fetch-asset
+  namespace: edt
+spec:
+  params:
+  - name: URL
+    description: URL of asset to fetch
+    type: string
+  - name: UNCOMPRESS
+    description: uncompress file (if compressed)
+    type: string
+    default: "false"
+  - name: OUTPUT_FILENAME
+    description: file name of asset
+    type: string
+  steps:
+  - name: fetch-asset
+    image: ubi8/ubi
+    script: |
+      #!/usr/bin/env bash
+      set -x
+      FILENAME="$(params.URL)"
+      FILENAME="${FILENAME%%\?*}"
+      FILENAME="$(basename ${FILENAME})"
+      curl --location --output "${FILENAME}" "$(params.URL)"
+
+      if [ "$(params.UNCOMPRESS)" == "true" ]; then
+        if [ "${FILENAME}" == *.xz ]; then
+          yum install -y xz
+          xz --decompress "${FILENAME}"
+          FILENANME=${FILENAME%.xz}
+        fi
+        if [ "${FILENAME}" == *.gz ]; then
+          gunzip "${FILENAME}"
+          FILENANME=${FILENAME%.gz}
+        fi
+      fi
+
+      if [ "${FILENAME}" != "$(params.OUTPUT_FILENAME)" ]; then
+        mv -- "${FILENAME}" "$(params.OUTPUT_FILENAME)"
+      fi
+    workingDir: $(workspaces.output.path)
+  workspaces:
+  - name: output

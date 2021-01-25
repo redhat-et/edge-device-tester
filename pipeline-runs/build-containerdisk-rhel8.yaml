@@ -1,0 +1,29 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: build-containerdisk-rhel8
+  namespace: edt
+spec:
+  pipelineRef:
+    name: build-containerdisk
+  params:
+  - name: URL
+    value: >-
+      YOUR_DOWNLOAD_URL_FROM_ACCESS_REDHAT_COM
+  - name: DISKIMAGE_FILENAME
+    value: rhel-8.3-x86_64-kvm.qcow2
+  - name: IMAGE
+    value: 'image-registry.openshift-image-registry.svc:5000/edt/osdisk_rhel8:latest'
+  serviceAccountName: pipeline
+  timeout: 1h0m0s
+  workspaces: 
+  - name: shared-workspace 
+    volumeClaimTemplate: 
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 4Gi
+        storageClassName: gp2
+        volumeMode: Filesystem

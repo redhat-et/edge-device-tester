@@ -1,0 +1,29 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: build-containerdisk-fiot33
+  namespace: edt
+spec:
+  pipelineRef:
+    name: build-containerdisk
+  params:
+  - name: URL
+    value: >-
+      https://download.fedoraproject.org/pub/alt/iot/33/IoT/x86_64/images/Fedora-IoT-33-20201215.0.x86_64.raw.xz
+  - name: DISKIMAGE_FILENAME
+    value: Fedora-IoT-33-20201215.0.x86_64.raw
+  - name: IMAGE
+    value: 'image-registry.openshift-image-registry.svc:5000/edt/osdisk_fiot33:latest'
+  serviceAccountName: pipeline
+  timeout: 1h0m0s
+  workspaces: 
+  - name: shared-workspace 
+    volumeClaimTemplate: 
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 4Gi
+        storageClassName: gp2
+        volumeMode: Filesystem

@@ -1,0 +1,29 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: build-containerdisk-fedora33
+  namespace: edt
+spec:
+  pipelineRef:
+    name: build-containerdisk
+  params:
+  - name: URL
+    value: >-
+      https://download.fedoraproject.org/pub/fedora/linux/releases/33/Cloud/x86_64/images/Fedora-Cloud-Base-33-1.2.x86_64.qcow2
+  - name: DISKIMAGE_FILENAME
+    value: Fedora-Cloud-Base-33-1.2.x86_64.qcow2
+  - name: IMAGE
+    value: 'image-registry.openshift-image-registry.svc:5000/edt/osdisk_fedora33:latest'
+  serviceAccountName: pipeline
+  timeout: 1h0m0s
+  workspaces: 
+  - name: shared-workspace 
+    volumeClaimTemplate: 
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 4Gi
+        storageClassName: gp2
+        volumeMode: Filesystem

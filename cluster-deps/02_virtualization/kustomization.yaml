@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- 00_namespace.yaml
+- 01_config_emulation.yaml
+- 02_operator_subscription.yaml
+- 03_operator.yaml

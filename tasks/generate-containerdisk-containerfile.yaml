@@ -1,0 +1,28 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: generate-containerdisk-containerfile
+  namespace: edt
+spec:
+  params:
+  - name: DISKIMAGE_FILENAME
+    description: filename of the diskimage
+    type: string
+  steps:
+  - name: generate-containerfile
+    image: ubi8/ubi
+    script: |
+      #!/usr/bin/env bash
+      set -x
+      ls -l
+      tee $PWD/Containerfile <<- EOF
+      FROM registry.access.redhat.com/ubi8/ubi:latest AS builder
+      ADD --chown=107:107 "$(params.DISKIMAGE_FILENAME)" /disk/
+      RUN chmod 0440 /disk/*
+
+      FROM scratch
+      COPY --from=builder /disk/* /disk/
+      EOF
+    workingDir: $(workspaces.output.path)
+  workspaces:
+  - name: output

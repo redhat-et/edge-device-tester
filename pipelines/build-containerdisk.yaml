@@ -1,0 +1,61 @@
+apiVersion: tekton.dev/v1beta1 
+kind: Pipeline 
+metadata:
+  name: build-containerdisk
+  namespace: edt
+spec: 
+  workspaces: 
+  - name: shared-workspace
+  params: 
+  - name: URL
+    type: string
+    description: URL of the disk image in .raw or .qcow2 format
+  - name: DISKIMAGE_FILENAME
+    type: string
+    description: filename of the disk image in .raw or .qcow2 format
+  - name: IMAGE
+    type: string
+    description: container image to build
+  tasks: 
+  - name: fetch-diskimage
+    taskRef:
+      name: fetch-asset
+      kind: Task
+    params:
+    - name: URL
+      value: $(params.URL)
+    - name: UNCOMPRESS
+      value: "true"
+    - name: OUTPUT_FILENAME
+      value: $(params.DISKIMAGE_FILENAME)
+    workspaces:
+    - name: output
+      workspace: shared-workspace
+  - name: generate-containerfile
+    taskRef:
+      name: generate-containerdisk-containerfile
+      kind: Task
+    params:
+    - name: DISKIMAGE_FILENAME
+      value: $(params.DISKIMAGE_FILENAME)
+    workspaces:
+    - name: output
+      workspace: shared-workspace
+    runAfter:
+    - fetch-diskimage
+  - name: build 
+    taskRef:
+      name: buildah
+      kind: ClusterTask
+    params:
+    - name: TLSVERIFY
+      value: "false"
+    - name: IMAGE
+      value: $(params.IMAGE)
+    - name: DOCKERFILE
+      value: ./Containerfile
+    workspaces:
+    - name: source
+      workspace: shared-workspace
+    runAfter:
+    - generate-containerfile
