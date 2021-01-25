@@ -10,6 +10,8 @@ spec:
   - name: URL
     value: >-
       https://download.fedoraproject.org/pub/fedora/linux/releases/33/Cloud/x86_64/images/Fedora-Cloud-Base-33-1.2.x86_64.qcow2
+  - name: SHA256_CHECKSUM
+    value: 7a2b3cc3bb3a92ce927e685d33efe8efd75577efbe207b267cb66f68afae7ce9
   - name: DISKIMAGE_FILENAME
     value: Fedora-Cloud-Base-33-1.2.x86_64.qcow2
   - name: IMAGE

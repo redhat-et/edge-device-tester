@@ -8,33 +8,45 @@ spec:
   - name: URL
     description: URL of asset to fetch
     type: string
+  - name: SHA256_CHECKSUM
+    description: SHA256 checksum to verify asset download (if empty, don't verify)
+    type: string
+    default: ""
   - name: UNCOMPRESS
-    description: uncompress file (if compressed)
+    description: uncompress asset (if compressed)
     type: string
     default: "false"
   - name: OUTPUT_FILENAME
-    description: file name of asset
+    description: file name to give asset
     type: string
   steps:
   - name: fetch-asset
-    image: ubi8/ubi
+    image: 'compressors:latest'
     script: |
       #!/usr/bin/env bash
-      set -x
+      set -ex
       FILENAME="$(params.URL)"
       FILENAME="${FILENAME%%\?*}"
       FILENAME="$(basename ${FILENAME})"
       curl --location --output "${FILENAME}" "$(params.URL)"
 
+      if [[ ! -z "$(params.SHA256_CHECKSUM)" ]]; then
+        SHA256=$(sha256sum "${FILENAME}" | cut -d' ' -f1)
+        echo "sha256 of downloaded file: ${SHA256}"
+        echo "sha256 expected: $(params.SHA256_CHECKSUM)"
+        if [ "${SHA256}" != "$(params.SHA256_CHECKSUM)" ]; then
+          exit -1
+        fi
+      fi
+
       if [ "$(params.UNCOMPRESS)" == "true" ]; then
         if [ "${FILENAME}" == *.xz ]; then
-          yum install -y xz
           xz --decompress "${FILENAME}"
-          FILENANME=${FILENAME%.xz}
+          FILENAME=${FILENAME%.xz}
         fi
         if [ "${FILENAME}" == *.gz ]; then
           gunzip "${FILENAME}"
-          FILENANME=${FILENAME%.gz}
+          FILENAME=${FILENAME%.gz}
         fi
       fi
 

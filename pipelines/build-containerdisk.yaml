@@ -10,6 +10,10 @@ spec:
   - name: URL
     type: string
     description: URL of the disk image in .raw or .qcow2 format
+  - name: SHA256_CHECKSUM
+    type: string
+    description: SHA256 checksum of downloaded disk image
+    default: ""
   - name: DISKIMAGE_FILENAME
     type: string
     description: filename of the disk image in .raw or .qcow2 format
@@ -24,6 +28,8 @@ spec:
     params:
     - name: URL
       value: $(params.URL)
+    - name: SHA256_CHECKSUM
+      value: $(params.SHA256_CHECKSUM)
     - name: UNCOMPRESS
       value: "true"
     - name: OUTPUT_FILENAME

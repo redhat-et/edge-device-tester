@@ -10,6 +10,8 @@ spec:
   - name: URL
     value: >-
       https://download.fedoraproject.org/pub/alt/iot/33/IoT/x86_64/images/Fedora-IoT-33-20201215.0.x86_64.raw.xz
+  - name: SHA256_CHECKSUM
+    value: c0fad916436f869fdf76b6d614c7e31c8737d74a17de2ab31fd164b24cd2803a
   - name: DISKIMAGE_FILENAME
     value: Fedora-IoT-33-20201215.0.x86_64.raw
   - name: IMAGE
