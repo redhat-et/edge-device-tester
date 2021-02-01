@@ -1,0 +1,104 @@
+apiVersion: kubevirt.io/v1alpha3
+kind: VirtualMachine
+metadata:
+  labels:
+    app: fedorabuilder-vm
+    vm.kubevirt.io/template: fedora-server-large-v0.11.3
+    vm.kubevirt.io/template.revision: '1'
+    vm.kubevirt.io/template.version: v0.12.4
+    os.template.kubevirt.io/fedora32: 'true'
+    workload.template.kubevirt.io/server: 'true'
+    vm.kubevirt.io/template.namespace: openshift
+  name: fedorabuilder-vm
+  namespace: edt
+  annotations:
+    name.os.template.kubevirt.io/fedora32: Fedora 31 or higher
+spec:
+  dataVolumeTemplates:
+    - apiVersion: cdi.kubevirt.io/v1alpha1
+      kind: DataVolume
+      metadata:
+        name: fedorabuilder-vm-rootdisk-ntaoz
+      spec:
+        pvc:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 120Gi
+          volumeMode: Filesystem
+        source:
+          http:
+            url: >-
+              https://download.fedoraproject.org/pub/fedora/linux/releases/33/Cloud/x86_64/images/Fedora-Cloud-Base-33-1.2.x86_64.qcow2
+  running: true
+  template:
+    metadata:
+      labels:
+        kubevirt.io/domain: fedorabuilder-vm
+        kubevirt.io/size: large
+        vm.kubevirt.io/name: fedorabuilder-vm
+        os.template.kubevirt.io/fedora32: 'true'
+        workload.template.kubevirt.io/server: 'true'
+    spec:
+      domain:
+        cpu:
+          cores: 4
+          sockets: 1
+          threads: 1
+        devices:
+          disks:
+            - bootOrder: 1
+              disk:
+                bus: virtio
+              name: rootdisk
+            - disk:
+                bus: virtio
+              name: cloudinitdisk
+          interfaces:
+            - masquerade: {}
+              model: virtio
+              name: nic-0
+          networkInterfaceMultiqueue: true
+          rng: {}
+        machine:
+          type: pc-q35-rhel8.2.0
+        resources:
+          requests:
+            memory: 8Gi
+      hostname: fedorabuilder-vm
+      networks:
+        - name: nic-0
+          pod: {}
+      terminationGracePeriodSeconds: 180
+      volumes:
+        - dataVolume:
+            name: fedorabuilder-vm-rootdisk-ntaoz
+          name: rootdisk
+        - cloudInitNoCloud:
+            userData: |
+              #cloud-config
+              user: redhat
+              password: redhat
+              chpasswd:
+                expire: false
+              ssh-authorized-keys:
+              - ssh-rsa AAAAB3NzaK8L93bWxnyp test@test.com
+              package_upgrade: true
+              yum_repos:
+                kubernetes:
+                  baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+                  enabled: true
+                  failovermethod: priority
+                  gpgcheck: true
+                  gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+                  name: Kubernetes
+              packages:
+              - osbuild-composer
+              - composer-cli
+              - git
+              runcmd:
+              - [ systemctl, enable, osbuild-composer.socket]
+              - [ systemctl, start, osbuild-composer.socket]
+              - [ dnf, module, enable, crio-o:1.20]
+          name: cloudinitdisk
