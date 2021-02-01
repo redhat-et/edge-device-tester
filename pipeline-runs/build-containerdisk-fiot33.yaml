@@ -7,19 +7,19 @@ spec:
   pipelineRef:
     name: build-containerdisk
   params:
-  - name: URL
+  - name: url
     value: >-
       https://download.fedoraproject.org/pub/alt/iot/33/IoT/x86_64/images/Fedora-IoT-33-20201215.0.x86_64.raw.xz
-  - name: SHA256_CHECKSUM
-    value: c0fad916436f869fdf76b6d614c7e31c8737d74a17de2ab31fd164b24cd2803a
-  - name: DISKIMAGE_FILENAME
-    value: Fedora-IoT-33-20201215.0.x86_64.raw
-  - name: IMAGE
+  - name: sha256_checksum
+    value: 'c0fad916436f869fdf76b6d614c7e31c8737d74a17de2ab31fd164b24cd2803a'
+  - name: image
     value: 'image-registry.openshift-image-registry.svc:5000/edt/osdisk_fiot33:latest'
+  - name: verbose
+    value: 'true'
   serviceAccountName: pipeline
   timeout: 1h0m0s
   workspaces: 
-  - name: shared-workspace 
+  - name: workspace 
     volumeClaimTemplate: 
       spec:
         accessModes:

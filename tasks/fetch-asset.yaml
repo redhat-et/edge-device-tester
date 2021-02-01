@@ -4,42 +4,55 @@ metadata:
   name: fetch-asset
   namespace: edt
 spec:
+  description: >-
+    This task downloads an asset from a given URL, optionally checks its
+    integrity based on a SHA256 checksum, and optionally uncompresses it.
   params:
-  - name: URL
+  - name: url
     description: URL of asset to fetch
     type: string
-  - name: SHA256_CHECKSUM
+  - name: sha256_checksum
     description: SHA256 checksum to verify asset download (if empty, don't verify)
     type: string
     default: ""
-  - name: UNCOMPRESS
+  - name: uncompress
     description: uncompress asset (if compressed)
     type: string
     default: "false"
-  - name: OUTPUT_FILENAME
-    description: file name to give asset
+  - name: verbose
+    description: 'log the commands used during execution'
     type: string
+    default: 'false'
+  results:
+    - name: filename
+      description: file name of asset in workspace
   steps:
   - name: fetch-asset
     image: 'compressors:latest'
     script: |
       #!/usr/bin/env bash
-      set -ex
-      FILENAME="$(params.URL)"
+
+      set -eu -o pipefail
+
+      if [[ "$(params.verbose)" == "true" ]] ; then
+        set -x
+      fi
+
+      FILENAME="$(params.url)"
       FILENAME="${FILENAME%%\?*}"
       FILENAME="$(basename ${FILENAME})"
-      curl --location --output "${FILENAME}" "$(params.URL)"
+      curl --location --output "${FILENAME}" "$(params.url)"
 
-      if [[ ! -z "$(params.SHA256_CHECKSUM)" ]]; then
+      if [[ ! -z "$(params.sha256_checksum)" ]]; then
         SHA256=$(sha256sum "${FILENAME}" | cut -d' ' -f1)
         echo "sha256 of downloaded file: ${SHA256}"
-        echo "sha256 expected: $(params.SHA256_CHECKSUM)"
-        if [ "${SHA256}" != "$(params.SHA256_CHECKSUM)" ]; then
+        echo "sha256 expected: $(params.sha256_checksum)"
+        if [ "${SHA256}" != "$(params.sha256_checksum)" ]; then
           exit -1
         fi
       fi
 
-      if [ "$(params.UNCOMPRESS)" == "true" ]; then
+      if [ "$(params.uncompress)" == "true" ]; then
         if [ "${FILENAME}" == *.xz ]; then
           xz --decompress "${FILENAME}"
           FILENAME=${FILENAME%.xz}
@@ -48,11 +61,14 @@ spec:
           gunzip "${FILENAME}"
           FILENAME=${FILENAME%.gz}
         fi
+        if [ "${FILENAME}" == *.bz2 ]; then
+          bzip2 --decompress "${FILENAME}"
+          FILENAME=${FILENAME%.bz2}
+        fi
       fi
 
-      if [ "${FILENAME}" != "$(params.OUTPUT_FILENAME)" ]; then
-        mv -- "${FILENAME}" "$(params.OUTPUT_FILENAME)"
-      fi
+      echo -n "${FILENAME}" | tee $(results.filename.path)
     workingDir: $(workspaces.output.path)
   workspaces:
   - name: output
+    description: The asset will be downloaded into the volume backing this workspace

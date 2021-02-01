@@ -5,19 +5,28 @@ metadata:
   namespace: edt
 spec:
   params:
-  - name: DISKIMAGE_FILENAME
-    description: filename of the diskimage
+  - name: filename
+    description: filename of the disk image to embed into the container disk
     type: string
+  - name: verbose
+    description: 'log the commands used during execution'
+    type: string
+    default: 'false'
   steps:
   - name: generate-containerfile
     image: ubi8/ubi
     script: |
       #!/usr/bin/env bash
-      set -x
-      ls -l
-      tee $PWD/Containerfile <<- EOF
+
+      set -eu -o pipefail
+
+      if [[ "$(params.verbose)" == "true" ]] ; then
+        set -x
+      fi
+
+      tee ./Containerfile <<- EOF
       FROM registry.access.redhat.com/ubi8/ubi:latest AS builder
-      ADD --chown=107:107 "$(params.DISKIMAGE_FILENAME)" /disk/
+      ADD --chown=107:107 "$(params.filename)" /disk/
       RUN chmod 0440 /disk/*
 
       FROM scratch

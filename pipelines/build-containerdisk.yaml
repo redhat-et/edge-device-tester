@@ -5,48 +5,55 @@ metadata:
   namespace: edt
 spec: 
   workspaces: 
-  - name: shared-workspace
+  - name: workspace
   params: 
-  - name: URL
+  - name: url
     type: string
     description: URL of the disk image in .raw or .qcow2 format
-  - name: SHA256_CHECKSUM
+  - name: sha256_checksum
     type: string
-    description: SHA256 checksum of downloaded disk image
-    default: ""
-  - name: DISKIMAGE_FILENAME
+    description: SHA256 checksum to verify asset download (if empty, don't verify)
+    default: ''
+  - name: uncompress
+    description: uncompress asset (if compressed)
     type: string
-    description: filename of the disk image in .raw or .qcow2 format
-  - name: IMAGE
+    default: 'true'
+  - name: image
     type: string
     description: container image to build
+  - name: verbose
+    description: 'log the commands used during execution'
+    type: string
+    default: 'false'
   tasks: 
   - name: fetch-diskimage
     taskRef:
       name: fetch-asset
       kind: Task
     params:
-    - name: URL
-      value: $(params.URL)
-    - name: SHA256_CHECKSUM
-      value: $(params.SHA256_CHECKSUM)
-    - name: UNCOMPRESS
-      value: "true"
-    - name: OUTPUT_FILENAME
-      value: $(params.DISKIMAGE_FILENAME)
+    - name: url
+      value: $(params.url)
+    - name: sha256_checksum
+      value: $(params.sha256_checksum)
+    - name: uncompress
+      value: $(params.uncompress)
+    - name: verbose
+      value: $(params.verbose)
     workspaces:
     - name: output
-      workspace: shared-workspace
+      workspace: workspace
   - name: generate-containerfile
     taskRef:
       name: generate-containerdisk-containerfile
       kind: Task
     params:
-    - name: DISKIMAGE_FILENAME
-      value: $(params.DISKIMAGE_FILENAME)
+    - name: filename
+      value: '$(tasks.fetch-diskimage.results.filename)'
+    - name: verbose
+      value: $(params.verbose)
     workspaces:
     - name: output
-      workspace: shared-workspace
+      workspace: workspace
     runAfter:
     - fetch-diskimage
   - name: build 
@@ -55,13 +62,13 @@ spec:
       kind: ClusterTask
     params:
     - name: TLSVERIFY
-      value: "false"
+      value: 'false'
     - name: IMAGE
-      value: $(params.IMAGE)
+      value: $(params.image)
     - name: DOCKERFILE
-      value: ./Containerfile
+      value: 'Containerfile'
     workspaces:
     - name: source
-      workspace: shared-workspace
+      workspace: workspace
     runAfter:
     - generate-containerfile

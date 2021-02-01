@@ -7,19 +7,19 @@ spec:
   pipelineRef:
     name: build-containerdisk
   params:
-  - name: URL
+  - name: url
     value: >-
       https://download.fedoraproject.org/pub/fedora/linux/releases/33/Cloud/x86_64/images/Fedora-Cloud-Base-33-1.2.x86_64.qcow2
-  - name: SHA256_CHECKSUM
-    value: 7a2b3cc3bb3a92ce927e685d33efe8efd75577efbe207b267cb66f68afae7ce9
-  - name: DISKIMAGE_FILENAME
-    value: Fedora-Cloud-Base-33-1.2.x86_64.qcow2
-  - name: IMAGE
+  - name: sha256_checksum
+    value: '7a2b3cc3bb3a92ce927e685d33efe8efd75577efbe207b267cb66f68afae7ce9'
+  - name: image
     value: 'image-registry.openshift-image-registry.svc:5000/edt/osdisk_fedora33:latest'
+  - name: verbose
+    value: 'true'
   serviceAccountName: pipeline
   timeout: 1h0m0s
   workspaces: 
-  - name: shared-workspace 
+  - name: workspace 
     volumeClaimTemplate: 
       spec:
         accessModes:
