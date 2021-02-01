@@ -4,7 +4,6 @@ REGISTRY=$(oc get route default-route -n openshift-image-registry --template='{{
 podman login -u $(oc whoami | sed 's/://') -p $(oc whoami -t) --tls-verify=false ${REGISTRY}
 
 IMAGES=$(find images/* -type d | xargs) 
-for i in ${IMAGES} do
+for i in ${IMAGES}; do
     podman build -t ${REGISTRY}/edt/$(basename ${i}):latest ${i}
-    podman push --tls-verify=false ${REGISTRY}/edt/$(basename ${i}):latest
 done
