@@ -1,0 +1,9 @@
+FROM registry.access.redhat.com/ubi8/ubi:8.3
+
+RUN INSTALL_PKGS="iputils bind-utils net-tools openssh-clients nmap nmap-ncat" && \
+    yum -y install $INSTALL_PKGS && \
+    rpm -V --nosize --nofiledigest --nomtime $INSTALL_PKGS && \
+    yum clean all && \
+    rm -rf /usr/local/man
+
+CMD ["/usr/bin/bash"]

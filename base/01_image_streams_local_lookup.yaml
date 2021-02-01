@@ -9,7 +9,7 @@ spec:
 apiVersion: image.openshift.io/v1
 kind: ImageStream
 metadata:
-  name: ssh
+  name: nettools
 spec:
   lookupPolicy:
     local: true
