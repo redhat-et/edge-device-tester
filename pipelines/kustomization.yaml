@@ -1,2 +1,3 @@
 resources:
 - build-containerdisk.yaml
+- build-release.yaml

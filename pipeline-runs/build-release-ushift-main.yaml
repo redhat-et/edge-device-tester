@@ -1,0 +1,48 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: build-release-ushift-main
+  namespace: edt
+spec:
+  pipelineRef:
+    name: build-release
+  params:
+    - name: url
+      value: 'git@github.com:redhat-et/ushift-ostree.git'
+    - name: revision
+      value: 'main'
+    - name: cores
+      value: '2'
+    - name: memory
+      value: '4Gi'
+    - name: diskimage
+      value: 'osdisk_rhel8:latest'
+    - name: storagesize
+      value: '120Gi'
+    - name: storageclass
+      value: 'gp2'
+    - name: s3-bucket
+      value: ''
+    - name: s3-prefix
+      value: ''
+    - name: verbose
+      value: 'true'
+  serviceAccountName: pipeline
+  timeout: 1h0m0s
+  workspaces:
+  - name: workspace
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+        storageClassName: gp2
+        volumeMode: Filesystem
+  - name: secrets
+    secret:
+      secretName: vm-ssh-keys
+  - name: aws-creds
+    secret:
+      secretName: aws-creds

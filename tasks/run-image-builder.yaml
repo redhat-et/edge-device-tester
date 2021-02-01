@@ -1,0 +1,44 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: run-image-builder
+  namespace: edt
+spec:
+  description: >-
+    This task runs image builder inside the specified VM.
+  params:
+  - name: ip
+    description: 'IP address of builder VM'
+    type: string
+  - name: user
+    description: 'user to SSH into the VM as'
+    type: string
+    default: 'redhat'
+  - name: verbose
+    description: 'log the commands used during execution'
+    type: string
+    default: 'false'
+  steps:
+  - name: dummy
+    image: 'ssh:latest'
+    script: |
+      #!/usr/bin/env bash
+
+      set -eu -o pipefail
+
+      if [[ "$(params.verbose)" == "true" ]] ; then
+        set -x
+      fi
+
+      SSH_OPTIONS='-i /tekton/home/ssh-key-pair/ssh-privatekey -o StrictHostKeyChecking=no'
+      ssh ${SSH_OPTIONS} $(params.user)@$(params.ip) <<-EOF
+      hostname
+      uname -a
+      EOF
+    workingDir: $(workspaces.output.path)
+  workspaces:
+  - name: output
+    description: workspace containing the build recipe
+  - name: secrets
+    mountPath: /tekton/home/ssh-key-pair
+    description: Secret volume containing SSH key pair for VM

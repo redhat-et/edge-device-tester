@@ -1,3 +1,6 @@
 resources:
 - fetch-asset.yaml
 - generate-containerdisk-containerfile.yaml
+- kubevirt-deploy-vm.yaml
+- run-image-builder.yaml
+- s3-upload.yaml

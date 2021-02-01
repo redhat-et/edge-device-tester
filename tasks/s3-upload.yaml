@@ -1,0 +1,50 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: s3-upload
+  namespace: edt
+spec:
+  description: >-
+    This task uploads artifacts to S3.
+  params:
+  - name: ip
+    description: 'IP address of builder VM'
+    type: string
+  - name: user
+    description: 'user to SSH into the VM as'
+    type: string
+    default: 'redhat'
+  - name: s3-bucket
+    description: 'S3 bucket to upload to'
+    type: string
+  - name: s3-prefix
+    description: 'prefix (path) for S3 keys to use'
+    type: string
+  - name: verbose
+    description: 'log the commands used during execution'
+    type: string
+    default: 'false'
+  steps:
+  - name: dummy
+    image: 'ssh:latest'
+    script: |
+      #!/usr/bin/env bash
+
+      set -eu -o pipefail
+
+      if [[ "$(params.verbose)" == "true" ]] ; then
+        set -x
+      fi
+
+      SSH_OPTIONS='-i /tekton/home/ssh-key-pair/ssh-privatekey -o StrictHostKeyChecking=no'
+      scp ${SSH_OPTIONS} -r /tekton/home/.aws $(params.user)@$(params.ip):.aws
+    workingDir: $(workspaces.output.path)
+  workspaces:
+  - name: output
+    description: workspace containing the build recipe
+  - name: secrets
+    mountPath: /tekton/home/ssh-key-pair
+    description: Secret volume containing SSH key pair for VM
+  - name: aws-creds
+    mountPath: /tekton/home/.aws
+    description: Secret volume containing AWS credentials

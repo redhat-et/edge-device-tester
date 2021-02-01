@@ -50,6 +50,3 @@ EOF
 cp "${STATE_DIR}/install-config.yaml" "${STATE_DIR}/install-config.yaml.bak"
 
 openshift-install create cluster --dir="${STATE_DIR}" --log-level=debug
-export KUBECONFIG="${STATE_DIR}/auth/kubeconfig"
-
-#oc apply -k cluster-deps/kustomization.yaml 
