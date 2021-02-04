@@ -1,0 +1,16 @@
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: device-manager-alias
+  namespace: device-manager
+  labels:
+    app: device-manager
+spec:
+  host: device-management.redhat.edge-lab.net
+  to:
+    kind: Service
+    name: device-manager
+    weight: 100
+  port:
+    targetPort: "8888"
+  wildcardPolicy: None

@@ -2,3 +2,5 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 bases:
 - github.com/redhat-et/mock-device-manager/manifests
+resources:
+- 00_route_alias.yaml
