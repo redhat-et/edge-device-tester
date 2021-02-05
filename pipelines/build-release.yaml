@@ -16,21 +16,6 @@ spec:
     type: string
     description: 'git revision to checkout (branch, tag, sha, ref…)'
     default: 'main'
-  - name: cores
-    description: 'cores'
-    type: string
-  - name: memory
-    description: 'memory'
-    type: string
-  - name: diskimage
-    description: 'containerDisk name or URL to import into dataVolume'
-    type: string
-  - name: storagesize
-    description: 'size of data volume (if importing dataVolume from URL)'
-    type: string
-  - name: storageclass
-    description: 'storage class of data volume (if importing dataVolume from URL)'
-    type: string
   - name: s3-bucket
     description: 'S3 bucket to upload to'
     type: string
@@ -40,7 +25,13 @@ spec:
   - name: verbose
     description: 'log the commands used during execution'
     type: string
-    default: 'false'
+    default: 'true'
+  - name: ip
+    description: 'IP address of the builder VM'
+    type: string
+  - name: variant
+    description: 'o3s or static-pods'
+    default: 'o3s'
   tasks:
   - name: fetch-configs
     taskRef:
@@ -56,55 +47,31 @@ spec:
     workspaces:
     - name: output
       workspace: workspace
-  - name: deploy-vm
-    taskRef:
-      name: kubevirt-deploy-vm
-      kind: Task
-    params:
-    - name: name
-      value: $(context.pipelineRun.name)
-    - name: cores
-      value: $(params.cores)
-    - name: memory
-      value: $(params.memory)
-    - name: diskimage
-      value: $(params.diskimage)
-    - name: storagesize
-      value: $(params.storagesize)
-    - name: storageclass
-      value: $(params.storageclass)
-    - name: verbose
-      value: $(params.verbose)
-    runAfter:
-    - fetch-configs
-    workspaces:
-    - name: secrets
-      workspace: secrets
   - name: build-image
     taskRef:
       name: run-image-builder
       kind: Task
     params:
     - name: ip
-      value: "$(tasks.deploy-vm.results.ip)"
+      value: "$(params.ip)"
     - name: user
       value: 'redhat'
     - name: verbose
       value: $(params.verbose)
-    runAfter:
-    - deploy-vm
     workspaces:
     - name: output
       workspace: workspace
     - name: secrets
       workspace: secrets
+    runAfter:
+    - fetch-configs
   - name: s3-upload
     taskRef:
       name: s3-upload
       kind: Task
     params:
     - name: ip
-      value: "$(tasks.deploy-vm.results.ip)"
+      value: "$(params.ip)"
     - name: user
       value: 'redhat'
     - name: s3-bucket

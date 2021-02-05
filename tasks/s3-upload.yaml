@@ -23,9 +23,12 @@ spec:
   - name: verbose
     description: 'log the commands used during execution'
     type: string
-    default: 'false'
+    default: 'true'
+  - name: variant
+    description: 'main, o3s or static-pods'
+    default: 'o3s'
   steps:
-  - name: dummy
+  - name: s3-upload
     image: 'ssh:latest'
     script: |
       #!/usr/bin/env bash
@@ -37,7 +40,17 @@ spec:
       fi
 
       SSH_OPTIONS='-i /tekton/home/ssh-key-pair/ssh-privatekey -o StrictHostKeyChecking=no'
+
       scp ${SSH_OPTIONS} -r /tekton/home/.aws $(params.user)@$(params.ip):.aws
+
+      ssh -T ${SSH_OPTIONS} $(params.user)@$(params.ip) << 'EOF'
+
+      aws s3 --recursive cp ~/latest-build/ s3://$(params.s3-bucket)/releases/fiot-$(params.variant)/latest/x86_64/
+
+      echo "Cleaning latest build directory..."
+      rm -rf ~/latest-build/*
+
+      EOF
     workingDir: $(workspaces.output.path)
   workspaces:
   - name: output
