@@ -30,7 +30,7 @@ spec:
     description: 'IP address of the builder VM'
     type: string
   - name: variant
-    description: 'o3s or static-pods'
+    description: 'main, o3s or pods'
     default: 'o3s'
   tasks:
   - name: fetch-configs

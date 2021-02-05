@@ -25,7 +25,7 @@ spec:
     type: string
     default: 'true'
   - name: variant
-    description: 'main, o3s or static-pods'
+    description: 'main, o3s or pods'
     default: 'o3s'
   steps:
   - name: s3-upload
