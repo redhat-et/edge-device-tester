@@ -10,7 +10,7 @@ spec:
     - name: url
       value: 'git@github.com:redhat-et/ushift-ostree.git'
     - name: revision
-      value: 'main'
+      value: 'o3s'
     - name: s3-bucket
       value: 'cdn.redhat.edge-lab.net'
     - name: s3-prefix
