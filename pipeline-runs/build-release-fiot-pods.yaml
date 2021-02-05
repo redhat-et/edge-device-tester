@@ -1,0 +1,42 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: build-release-fiot-pods
+  namespace: edt
+spec:
+  pipelineRef:
+    name: build-release
+  params:
+    - name: url
+      value: 'git@github.com:redhat-et/ushift-ostree.git'
+    - name: revision
+      value: 'pods'
+    - name: s3-bucket
+      value: 'cdn.redhat.edge-lab.net'
+    - name: s3-prefix
+      value: ''
+    - name: verbose
+      value: 'true'
+    - name: ip
+      value: '10.131.0.13'
+    - name: variant
+      value: 'pods'
+  serviceAccountName: pipeline
+  timeout: 2h0m0s
+  workspaces:
+  - name: workspace
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+        storageClassName: gp2
+        volumeMode: Filesystem
+  - name: secrets
+    secret:
+      secretName: vm-ssh-keys
+  - name: aws-creds
+    secret:
+      secretName: aws-creds
