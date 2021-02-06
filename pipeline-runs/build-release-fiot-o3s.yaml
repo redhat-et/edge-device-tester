@@ -15,6 +15,8 @@ spec:
       value: 'cdn.redhat.edge-lab.net'
     - name: s3-prefix
       value: ''
+    - name: s3-acl
+      value: 'public-read'
     - name: verbose
       value: 'true'
     - name: ip

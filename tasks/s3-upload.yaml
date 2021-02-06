@@ -20,6 +20,10 @@ spec:
   - name: s3-prefix
     description: 'prefix (path) for S3 keys to use'
     type: string
+  - name: s3-acl
+    description: 'ACL for uploaded objects'
+    type: string
+    default: 'private'
   - name: verbose
     description: 'log the commands used during execution'
     type: string
@@ -45,7 +49,7 @@ spec:
 
       ssh -T ${SSH_OPTIONS} $(params.user)@$(params.ip) << 'EOF'
 
-      aws s3 --recursive cp ~/latest-build/ s3://$(params.s3-bucket)/releases/fiot-$(params.variant)/latest/x86_64/
+      aws s3 --recursive --acl $(params.s3-acl) cp ~/latest-build/ s3://$(params.s3-bucket)/releases/fiot-$(params.variant)/latest/x86_64/
 
       echo "Cleaning latest build directory..."
       rm -rf ~/latest-build/*

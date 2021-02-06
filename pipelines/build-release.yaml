@@ -22,6 +22,10 @@ spec:
   - name: s3-prefix
     description: 'prefix (path) for S3 keys to use'
     type: string
+  - name: s3-acl
+    description: 'ACL for uploaded objects'
+    type: string
+    default: 'priate'
   - name: verbose
     description: 'log the commands used during execution'
     type: string
@@ -78,6 +82,8 @@ spec:
       value: $(params.s3-bucket)
     - name: s3-prefix
       value: $(params.s3-prefix)
+    - name: s3-acl
+      value: $(params.s3-acl)
     - name: verbose
       value: $(params.verbose)
     runAfter:
