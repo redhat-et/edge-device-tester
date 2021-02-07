@@ -86,6 +86,8 @@ spec:
       value: $(params.s3-prefix)
     - name: s3-acl
       value: $(params.s3-acl)
+    - name: variant
+      value: $(params.variant)
     - name: verbose
       value: $(params.verbose)
     runAfter:
