@@ -35,7 +35,7 @@ spec:
     type: string
   - name: variant
     description: 'main, o3s or pods'
-    default: 'o3s'
+    type: string
   tasks:
   - name: fetch-configs
     taskRef:
@@ -60,6 +60,8 @@ spec:
       value: "$(params.ip)"
     - name: user
       value: 'redhat'
+    - name: variant
+      value: $(params.variant)
     - name: verbose
       value: $(params.verbose)
     workspaces:

@@ -20,7 +20,6 @@ spec:
     default: 'false'
   - name: variant
     description: 'main, o3s or pods'
-    default: 'o3s'
   steps:
   - name: image-builder-compose
     image: 'ssh:latest'
