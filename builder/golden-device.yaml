@@ -1,0 +1,76 @@
+apiVersion: kubevirt.io/v1alpha3
+kind: VirtualMachine
+metadata:
+  name: golden-device
+  namespace: edt
+spec:
+  running: true
+  template:
+    metadata:
+      name: golden-device
+    spec:
+      domain:
+        cpu:
+          cores: 4
+          sockets: 1
+          threads: 1
+        devices:
+          disks:
+            - bootOrder: 1
+              disk:
+                bus: virtio
+              name: rootdisk
+            - bootOrder: 2
+              cdrom:
+                bus: sata
+              name: cdromiso
+          interfaces:
+            - masquerade: {}
+              model: virtio
+              name: nic-0
+              macAddress: de:00:00:00:00:de
+          networkInterfaceMultiqueue: true
+          rng: {}
+        machine:
+          type: pc-q35-rhel8.2.0
+        resources:
+          requests:
+            memory: 4Gi
+      networks:
+        - name: nic-0
+          pod: {}
+      terminationGracePeriodSeconds: 0
+      volumes:
+        - name: rootdisk
+          persistentVolumeClaim:
+            claimName: golden-device-rootdisk-pvc
+        - name: cdromiso
+          persistentVolumeClaim:
+            claimName: golden-device-cdromiso-dv
+  dataVolumeTemplates:
+  - metadata:
+      name: golden-device-cdromiso-dv
+    spec:
+      pvc:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+      source:
+        http: 
+          url: "https://s3.eu-central-1.amazonaws.com/cdn.redhat.edge-lab.net/releases/fiot-main/latest/x86_64/fiot-main-installer.iso"
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: golden-device-rootdisk-pvc
+  namespace: edt
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: gp2
+  volumeMode: Filesystem
