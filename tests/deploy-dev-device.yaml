@@ -1,0 +1,103 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: dev-device
+  namespace: edt
+spec:
+  params:
+    - name: diskimage
+      value: osdisk_fiot-main
+    - name: git-repo
+      value: 'https://github.com/redhat-et/ushift'
+    - name: git-reftag
+      value: main
+    - name: cores
+      value: '2'
+    - name: memory
+      value: 2Gi
+
+  pipelineSpec:
+    workspaces:
+    - name: aws-creds
+    - name: ssh-keys
+
+    params:
+    - name: diskimage
+      description: 'disk image to image device with'
+      type: string
+    - name: git-repo
+      description: 'git repo to use for device config'
+      type: string
+    - name: git-reftag
+      description: 'git reftag to use for device config'
+      type: string
+    - name: cores
+      description: 'cores'
+      type: string
+    - name: memory
+      description: 'memory'
+      type: string
+    - name: verbose
+      description: 'log the commands used during execution'
+      type: string
+      default: 'false'
+
+    tasks:
+      - name: register-device
+        taskRef:
+          name: register-device
+          kind: Task
+        params:
+        - name: mac-address
+          value: 'auto'
+        - name: git-repo
+          value: $(params.git-repo)
+        - name: git-reftag
+          value: $(params.git-reftag)
+        - name: verbose
+          value: $(params.verbose)
+        workspaces:
+        - name: aws-creds
+          workspace: aws-creds
+
+      - name: deploy-device
+        taskRef:
+          name: kubevirt-deploy-vm
+          kind: Task
+        params:
+        - name: name
+          value: $(context.pipelineRun.name)
+        - name: namespace
+          value: 'edt'
+        - name: cores
+          value: $(params.cores)
+        - name: memory
+          value: $(params.memory)
+        - name: mac-address
+          value: $(tasks.register-device.results.mac-address)
+        - name: diskimage
+          value: $(params.diskimage)
+        - name: storagesize
+          value: ''
+        - name: storageclass
+          value: ''
+        - name: add-userpass
+          value: 'redhat:redhat'
+        - name: add-ssh-key
+          value: 'false'
+        - name: verbose
+          value: $(params.verbose)
+        runAfter:
+        - register-device
+        workspaces:
+        - name: ssh-keys
+          workspace: ssh-keys
+
+  serviceAccountName: pipeline
+  workspaces:
+    - name: aws-creds
+      secret:
+        secretName: aws-creds
+    - name: ssh-keys
+      secret:
+        secretName: vm-ssh-keys

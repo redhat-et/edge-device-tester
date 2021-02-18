@@ -21,7 +21,7 @@ spec:
   - name: cores
     description: 'cores'
     type: string
-    default: '1'
+    default: '2'
   - name: memory
     description: 'memory'
     type: string
