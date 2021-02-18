@@ -43,13 +43,11 @@ spec:
       FILENAME="$(basename ${FILENAME})"
       curl --location --output "${FILENAME}" "$(params.url)"
 
-      if [[ ! -z "$(params.sha256_checksum)" ]]; then
+      if [ ! -z "$(params.sha256_checksum)" ]; then
         SHA256=$(sha256sum "${FILENAME}" | cut -d' ' -f1)
-        echo "sha256 of downloaded file: ${SHA256}"
-        echo "sha256 expected: $(params.sha256_checksum)"
-        if [ "${SHA256}" != "$(params.sha256_checksum)" ]; then
-          exit -1
-        fi
+        echo "SHA256 of downloaded file: ${SHA256}"
+        echo "SHA256 expected: $(params.sha256_checksum)"
+        test [ "${SHA256}" != "$(params.sha256_checksum)" ] && exit 1
       fi
 
       if [ "$(params.uncompress)" == "true" ]; then
