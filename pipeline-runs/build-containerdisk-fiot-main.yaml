@@ -9,11 +9,11 @@ spec:
   params:
   - name: url
     value: >-
-      https://download.fedoraproject.org/pub/alt/iot/33/IoT/x86_64/images/Fedora-IoT-33-20201215.0.x86_64.raw.xz
+      https://s3.eu-central-1.amazonaws.com/cdn.redhat.edge-lab.net/releases/fiot-main/latest/x86_64/fiot-main.raw
   - name: sha256_checksum
-    value: 'c0fad916436f869fdf76b6d614c7e31c8737d74a17de2ab31fd164b24cd2803a'
+    value: ''
   - name: image
-    value: 'image-registry.openshift-image-registry.svc:5000/edt/osdisk_fiot33:latest'
+    value: 'image-registry.openshift-image-registry.svc:5000/edt/osdisk_fiot-main:latest'
   - name: verbose
     value: 'true'
   serviceAccountName: pipeline
@@ -26,6 +26,6 @@ spec:
           - ReadWriteOnce
         resources:
           requests:
-            storage: 4Gi
+            storage: 10Gi
         storageClassName: gp2
         volumeMode: Filesystem
