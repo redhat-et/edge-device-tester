@@ -6,6 +6,7 @@ metadata:
 spec: 
   workspaces: 
   - name: workspace
+
   params: 
   - name: url
     type: string
@@ -25,6 +26,7 @@ spec:
     description: 'log the commands used during execution'
     type: string
     default: 'false'
+
   tasks: 
   - name: fetch-diskimage
     taskRef:
@@ -42,6 +44,7 @@ spec:
     workspaces:
     - name: output
       workspace: workspace
+
   - name: generate-containerfile
     taskRef:
       name: generate-containerdisk-containerfile
@@ -56,7 +59,8 @@ spec:
       workspace: workspace
     runAfter:
     - fetch-diskimage
-  - name: build 
+
+  - name: build-and-push
     taskRef:
       name: buildah
       kind: ClusterTask
@@ -72,3 +76,17 @@ spec:
       workspace: workspace
     runAfter:
     - generate-containerfile
+
+  - name: set-local-lookup
+    taskRef:
+      name: openshift-client
+      kind: ClusterTask
+    params:
+    - name: ARGS
+      value:
+      - patch
+      - -n
+      - edt
+      - is/$(params.image)
+      - -p
+      - '{"spec":{"lookupPolicy":{"local":true}}}'
