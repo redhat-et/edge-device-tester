@@ -41,7 +41,10 @@ spec:
       FILENAME="$(params.url)"
       FILENAME="${FILENAME%%\?*}"
       FILENAME="$(basename ${FILENAME})"
-      curl --location --output "${FILENAME}" "$(params.url)"
+      curl --location --fail --output "${FILENAME}" "$(params.url)"
+      if [ $? -ne 0 ]; then
+        exit 1
+      fi
 
       if [ ! -z "$(params.sha256_checksum)" ]; then
         SHA256=$(sha256sum "${FILENAME}" | cut -d' ' -f1)
