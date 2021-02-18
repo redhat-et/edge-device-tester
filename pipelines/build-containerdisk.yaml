@@ -90,3 +90,5 @@ spec:
       - is/$(params.image)
       - -p
       - '{"spec":{"lookupPolicy":{"local":true}}}'
+    runAfter:
+    - build-and-push
