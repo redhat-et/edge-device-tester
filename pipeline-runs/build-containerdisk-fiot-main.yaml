@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  name: build-containerdisk-fiot33
+  name: build-containerdisk-fiot-main
   namespace: edt
 spec:
   pipelineRef:
