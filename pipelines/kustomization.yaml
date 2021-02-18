@@ -4,3 +4,4 @@ namespace: edt
 resources:
 - build-containerdisk.yaml
 - build-release.yaml
+- test-device-provisions.yaml

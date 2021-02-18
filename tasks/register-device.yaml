@@ -1,0 +1,98 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: register-device
+  namespace: edt
+spec:
+  description: >-
+    This task generates a mapping from device MAC to the device config repo and uploads it to the device manager's S3 bucket.
+  params:
+  - name: mac-address
+    description: 'MAC address of device to register. Use "auto" (default) to generate randomly.'
+    type: string
+    default: 'auto'
+  - name: git-repo
+    description: 'git repo to use for device config'
+    type: string
+  - name: git-reftag
+    description: 'git reftag to use for device config'
+    type: string
+    default: 'HEAD'
+  - name: s3-bucket
+    description: 'S3 bucket to upload registration to'
+    type: string
+    default: 'edge-lab-device-manager'
+  - name: verbose
+    description: 'log the commands used during execution'
+    type: string
+    default: 'false'
+  results:
+    - name: mac-address
+      description: MAC address registered
+  steps:
+  - name: generate-mac
+    image: 'ubi8/ubi'
+    script: |
+      #!/usr/bin/env bash
+
+      set -eu -o pipefail
+
+      if [[ "$(params.verbose)" == "true" ]] ; then
+        set -x
+      fi
+
+      test -z "$(params.mac-address)" && exit 1
+
+      MAC_ADDRESS="$(params.mac-address)"
+      if [ "${MAC_ADDRESS}" = "auto" ]; then
+        echo "Generating new MAC address:"
+        # generate a random, valid MAC address, ensuring the unicast bit is
+        # cleared and the "locally administrated" bit is set
+        MAC_ADDRESS=$(printf "%02x:%02x:%02x:%02x:%02x:%02x" \
+          $(($RANDOM & 0xfe | 0x02)) \
+          $(($RANDOM & 0xff)) \
+          $(($RANDOM & 0xff)) \
+          $(($RANDOM & 0xff)) \
+          $(($RANDOM & 0xff)) \
+          $(($RANDOM & 0xff)) \
+        )
+      else
+        echo "Using configured MAC address:"
+      fi
+
+      echo -n "${MAC_ADDRESS}" | tee $(results.mac-address.path)
+  - name: generate-registration
+    image: 'ubi8/ubi'
+    script: |
+      #!/usr/bin/env bash
+
+      set -eu -o pipefail
+
+      if [[ "$(params.verbose)" == "true" ]] ; then
+        set -x
+      fi
+
+      GIT_REPO=$(params.git-repo)
+      GIT_REPO=$(echo ${GIT_REPO} | sed -E 's|^http(s)?://github.com|https://raw.githubusercontent.com|')
+      echo "Generating registration $(cat $(results.mac-address.path)).yaml:"
+      cat <<-EOF | tee $(cat $(results.mac-address.path)).yaml
+        blueprint: ${GIT_REPO}/$(params.git-reftag)/ignition.json
+        transformer:
+        vars:
+      EOF
+  - name: upload-registration
+    image: docker.io/amazon/aws-cli:2.0.52@sha256:1506cec98a7101c935176d440a14302ea528b8f92fcaf4a6f1ea2d7ecef7edc4 #tag: 2.0.52
+    script: |
+      #!/usr/bin/env bash
+
+      set -eu -o pipefail
+
+      if [[ "$(params.verbose)" == "true" ]] ; then
+        set -x
+      fi
+
+      aws s3 cp $(cat $(results.mac-address.path)).yaml s3://$(params.s3-bucket)/$(cat $(results.mac-address.path)).yaml
+  workspaces:
+  - name: aws-creds
+    mountPath: /tekton/home/.aws
+    description: Secret volume containing AWS credentials

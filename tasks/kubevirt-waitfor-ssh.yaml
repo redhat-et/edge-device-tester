@@ -1,0 +1,60 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: kubevirt-waitfor-ssh
+  namespace: edt
+spec:
+  description: >-
+    This task waits for the VM to become.
+
+  params:
+  - name: ip
+    description: 'IP to connect to'
+    type: string
+  - name: port
+    description: 'port to connect to'
+    type: string
+    default: '22'
+  - name: user
+    description: 'user to connect as'
+    type: string
+    default: 'redhat'
+  - name: verbose
+    description: 'log the commands used during execution'
+    type: string
+    default: 'false'
+
+  results:
+    - name: ip
+      description: IP address of the deployed VM
+
+  steps:
+  - name: waitfor-ssh
+    image: 'nettools:latest'
+    script: |
+      #!/usr/bin/env bash
+
+      set -eu -o pipefail
+
+      if [[ "$(params.verbose)" == "true" ]] ; then
+        set -x
+      fi
+
+      START_TIME=${SECONDS}
+      while true; do
+        RESULT=$(ssh \
+          -i /tekton/home/ssh-key-pair/ssh-privatekey \
+          -o StrictHostKeyChecking=no \
+          -p $(params.port) \
+          $(params.user)@$(params.ip) \
+          echo "ready" || true)
+        test "${RESULT}" = "ready" && break
+
+        echo "Waiting for SSH to become available... ($((${SECONDS} - ${START_TIME}))s)"
+        sleep 5
+      done
+
+  workspaces:
+  - name: ssh-keys
+    mountPath: /tekton/home/ssh-key-pair
+    description: Secret volume containing SSH key pair for VM

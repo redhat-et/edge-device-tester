@@ -8,6 +8,7 @@ spec:
     This task deploys a KubeVirt VM and waits until it is reachable via SSH.
     Requires a secret with both SSH private and public keys to be mounted
     as a workspace 'secrets'.
+
   params:
   - name: name
     description: 'VM name'
@@ -22,6 +23,10 @@ spec:
   - name: memory
     description: 'memory'
     type: string
+  - name: mac-address
+    description: 'MAC address to use for primary interface. If set to "auto" (default), leaves this to libvirt.'
+    type: string
+    default: 'auto'
   - name: diskimage
     description: 'containerDisk name or URL to import into dataVolume'
     type: string
@@ -31,13 +36,23 @@ spec:
   - name: storageclass
     description: 'storage class of data volume (if importing dataVolume from URL)'
     type: string
+  - name: add-userpass
+    description: 'the "user:password" to set via cloudinit (leave empty for none)'
+    type: string
+    default: 'redhat:redhat'
+  - name: add-ssh-key
+    description: 'whether to set the public SSH key from "secret" workspace via cloudinit'
+    type: string
+    default: 'true'
   - name: verbose
     description: 'log the commands used during execution'
     type: string
     default: 'false'
+
   results:
     - name: ip
       description: IP address of the deployed VM
+
   steps:
   - name: deploy-vm
     image: 'image-registry.openshift-image-registry.svc:5000/openshift/cli:latest'
@@ -50,51 +65,88 @@ spec:
         set -x
       fi
 
-      SSH_PUB_KEY=$(cat "/tekton/home/ssh-key-pair/ssh-publickey")
+      # gather disks, volumes, and volumeTemplates of the VM, storing them in
+      # temporary files of the same name, then pasting together
+      # of the same name
 
-      cat <<-EOF > userdata
-      #cloud-config
-      user: redhat
-      password: redhat
-      chpasswd: { expire: False }
-      ssh_pwauth: False
-      ssh_authorized_keys:
-        - ${SSH_PUB_KEY}
-      EOF
-
+      # if disk image includes a URL schema, assume we'll download it via a
+      # DV, otherwise assume it names a container disk image
       if [[ "$(params.diskimage)" =~ '://' ]]; then
-      cat <<-EOF > rootdisk
-              - name: rootdisk
-                dataVolume:
-                  name: $(params.name)-rootdisk
-        dataVolumeTemplates:
-          - apiVersion: cdi.kubevirt.io/v1alpha1
-            kind: DataVolume
-            metadata:
-              name: $(params.name)-rootdisk
-            spec:
-              pvc:
-                accessModes:
-                  - ReadWriteOnce
-                resources:
-                  requests:
-                    storage: $(params.storagesize)
-                storageClassName: $(params.storageclass)
-                volumeMode: Filesystem
-              source:
-                http:
-                  url: >-
-                    $(params.diskimage)
+        cat <<-EOF >> disks
+      - name: rootdisk
+        bootOrder: 1
+        dataVolume:
+          name: $(params.name)-rootdisk
+      EOF
+        cat <<-EOF >> volumeTemplates
+      dataVolumeTemplates:
+        - apiVersion: cdi.kubevirt.io/v1alpha1
+          kind: DataVolume
+          metadata:
+            name: $(params.name)-rootdisk
+          spec:
+            pvc:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: $(params.storagesize)
+              storageClassName: $(params.storageclass)
+              volumeMode: Filesystem
+            source:
+              http:
+                url: >-
+                  $(params.diskimage)
       EOF
       else
-      cat <<-EOF > rootdisk
-              - name: rootdisk
-                containerDisk:
-                  image: $(params.diskimage)
+        cat <<-EOF >> disks
+      - name: rootdisk
+        bootOrder: 1
+        disk:
+          bus: virtio
+      EOF
+        cat <<-EOF >> volumes
+      - name: rootdisk
+        containerDisk:
+          image: $(params.diskimage)
       EOF
       fi
 
-      cat <<-EOF | tee vm.yaml
+      # if adding ssh key or userpasss, create a cloudinit disk and volume
+      if [[ "$(params.add-ssh-key)" = "true" || ! -z "$(params.add-userpass)" ]]; then
+        cat <<-EOF >> disks
+      - name: cloudinitdisk
+        disk:
+          bus: virtio
+      EOF
+        cat <<-EOF >> volumes
+      - name: cloudinitdisk
+        cloudInitNoCloud:
+          userData: |-
+            #cloud-config
+      EOF
+      fi
+      if [ "$(params.add-userpass)" != "" ]; then
+        USERPASS=$(params.add-userpass)
+        cat <<-EOF >> volumes
+            user: ${USERPASS%:*}
+            password: ${USERPASS#*:}
+            chpasswd: { expire: False }
+      EOF
+      fi
+      if [ "$(params.add-ssh-key)" = "true" ]; then
+        cat <<-EOF >> volumes
+            ssh_pwauth: False
+            ssh_authorized_keys:
+              - $(cat "/tekton/home/ssh-key-pair/ssh-publickey")
+      EOF
+      fi
+
+      MAC_ADDRESS=''
+      test "$(params.mac-address)" != "auto" && MAC_ADDRESS="macAddress: $(params.mac-address)"
+
+      # now compose the vm.yaml file
+      tee vm.yaml <<-EOF
       apiVersion: kubevirt.io/v1alpha3
       kind: VirtualMachine
       metadata:
@@ -106,47 +158,36 @@ spec:
           metadata:
             name: $(params.name)
           spec:
+            hostname: $(params.name)
+            terminationGracePeriodSeconds: 0
             domain:
               cpu:
                 cores: $(params.cores)
                 sockets: 1
                 threads: 1
-              devices:
-                disks:
-                  - name: rootdisk
-                    bootOrder: 1
-                    disk:
-                      bus: virtio
-                  - name: cloudinitdisk
-                    disk:
-                      bus: virtio
               resources:
                 requests:
                   memory: $(params.memory)
-            hostname: $(params.name)
-            terminationGracePeriodSeconds: 180
+              devices:
+                disks:
+      $(cat disks 2>/dev/null | sed 's|^|          |')
+                interfaces:
+                - name: nic-0
+                  masquerade: {}
+                  model: virtio
+                  ${MAC_ADDRESS}
+            networks:
+            - name: nic-0
+              pod: {}
             volumes:
-              - name: cloudinitdisk
-                cloudInitNoCloud:
-                  userDataBase64: $(cat userdata | base64 -w0)
-      $(cat rootdisk)
+      $(cat volumes 2>/dev/null | sed 's|^|      |')
+      $(cat volumeTemplates 2>/dev/null | sed 's|^|  |')
       EOF
 
       oc apply -f vm.yaml
 
-      IP=''
-
-      START_TIME=${SECONDS}
-      while true; do
-        IP=$(oc get pods -n edt -o wide | { grep virt-launcher-build-release-ushift-main || test $? = 1; } | awk '{print $6}')
-        test ! -z "${IP}" && test "${IP}" != "<none>" && break
-        echo "Waiting for VM to start... $((${SECONDS} - ${START_TIME}))s"
-        sleep 5
-      done
-
-      echo -n "${IP}" | tee $(results.ip.path)
-  - name: waitfor-vm
-    image: 'ssh:latest'
+  - name: waitfor-ip
+    image: 'image-registry.openshift-image-registry.svc:5000/openshift/cli:latest'
     script: |
       #!/usr/bin/env bash
 
@@ -156,16 +197,19 @@ spec:
         set -x
       fi
 
-      IP=$(cat $(results.ip.path))
+      IP=''
 
       START_TIME=${SECONDS}
       while true; do
-        RESULT=$(ssh -i /tekton/home/ssh-key-pair/ssh-privatekey -o StrictHostKeyChecking=no redhat@${IP} echo "ready" || true)
-        test "${RESULT}" = "ready" && break
-        echo "Waiting for VM to become ready... ($((${SECONDS} - ${START_TIME}))s)"
+        IP=$(oc get pods -n edt -o wide | { grep virt-launcher-$(params.name) || test $? = 1; } | awk '{print $6}')
+        test ! -z "${IP}" && test "${IP}" != "<none>" && break
+        echo "Waiting for VM to have an IP address... $((${SECONDS} - ${START_TIME}))s"
         sleep 5
       done
+
+      echo -n "${IP}" | tee $(results.ip.path)
+
   workspaces:
-  - name: secrets
+  - name: ssh-keys
     mountPath: /tekton/home/ssh-key-pair
     description: Secret volume containing SSH key pair for VM

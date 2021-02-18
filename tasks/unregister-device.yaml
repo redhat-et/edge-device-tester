@@ -1,0 +1,32 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: unregister-device
+  namespace: edt
+spec:
+  description: >-
+    This task removes the mapping from device MAC to the device config repo from the device manager's S3 bucket.
+  params:
+  - name: mac-address
+    description: 'MAC address of device to unregister.'
+    type: string
+  - name: s3-bucket
+    description: 'S3 bucket to upload registration to'
+    type: string
+    default: 'edge-lab-device-manager'
+  - name: verbose
+    description: 'log the commands used during execution'
+    type: string
+    default: 'false'
+  steps:
+  - name: delete-registration
+    image: docker.io/amazon/aws-cli:2.0.52@sha256:1506cec98a7101c935176d440a14302ea528b8f92fcaf4a6f1ea2d7ecef7edc4 #tag: 2.0.52
+    script: "aws $@"
+    args:
+      - s3
+      - rm
+      - s3://$(params.s3-bucket)/$(params.mac-address).yaml
+  workspaces:
+  - name: aws-creds
+    mountPath: /tekton/home/.aws
+    description: Secret volume containing AWS credentials
