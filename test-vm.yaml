@@ -1,0 +1,85 @@
+apiVersion: kubevirt.io/v1alpha3
+kind: VirtualMachine
+metadata:
+  labels:
+    app: test-vm
+    vm.kubevirt.io/template: fedora-server-large-v0.11.3
+    vm.kubevirt.io/template.revision: '1'
+    vm.kubevirt.io/template.version: v0.12.4
+    os.template.kubevirt.io/fedora32: 'true'
+    workload.template.kubevirt.io/server: 'true'
+    vm.kubevirt.io/template.namespace: openshift
+  name: test-vm
+  namespace: edt
+  annotations:
+    name.os.template.kubevirt.io/fedora32: Fedora 31 or higher
+spec:
+  dataVolumeTemplates:
+    - apiVersion: cdi.kubevirt.io/v1alpha1
+      kind: DataVolume
+      metadata:
+        name: test-vm-rootdisk-ntaoz
+      spec:
+        pvc:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 120Gi
+          volumeMode: Filesystem
+        source:
+          http:
+            url: >-
+              http://cdn.redhat.edge-lab.net/releases/fiot-main/latest/x86_64/fiot-main-installer.iso
+  running: true
+  template:
+    metadata:
+      labels:
+        kubevirt.io/domain: test-vm
+        kubevirt.io/size: large
+        vm.kubevirt.io/name: test-vm
+        os.template.kubevirt.io/fedora32: 'true'
+        workload.template.kubevirt.io/server: 'true'
+    spec:
+      domain:
+        cpu:
+          cores: 4
+          sockets: 1
+          threads: 1
+        devices:
+          disks:
+            - bootOrder: 1
+              disk:
+                bus: virtio
+              name: rootdisk
+            - disk:
+                bus: virtio
+              name: cloudinitdisk
+          interfaces:
+            - masquerade: {}
+              model: virtio
+              name: nic-0
+          networkInterfaceMultiqueue: true
+          rng: {}
+        machine:
+          type: pc-q35-rhel8.2.0
+        resources:
+          requests:
+            memory: 2Gi
+      hostname: test-vm
+      networks:
+        - name: nic-0
+          pod: {}
+      terminationGracePeriodSeconds: 180
+      volumes:
+        - dataVolume:
+            name: test-vm-rootdisk-ntaoz
+          name: rootdisk
+        - cloudInitNoCloud:
+            userData: |
+              #cloud-config
+              user: redhat
+              password: redhat
+              chpasswd:
+                expire: false
+          name: cloudinitdisk

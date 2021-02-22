@@ -1,0 +1,176 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: kubevirt-deploy-golden-image
+  namespace: edt
+spec:
+  description: >-
+    This task deploys a KubeVirt VM and waits until it is reachable via SSH.
+    Requires a secret with both SSH private and public keys to be mounted
+    as a workspace 'secrets'.
+  params:
+  - name: name
+    description: 'VM name'
+    type: string
+  - name: namespace
+    description: 'namespace'
+    type: string
+    default: $(context.taskRun.namespace)
+  - name: cores
+    description: 'cores'
+    type: string
+  - name: memory
+    description: 'memory'
+    type: string
+  - name: diskimage 
+    description: 'URL to import into dataVolume'
+    type: string
+  - name: storagesize
+    description: 'size of data volume (if importing dataVolume from URL)'
+    type: string
+  - name: storageclass
+    description: 'storage class of data volume (if importing dataVolume from URL)'
+    type: string
+  - name: verbose
+    description: 'log the commands used during execution'
+    type: string
+    default: 'false'
+  results:
+    - name: ip
+      description: IP address of the deployed VM
+  steps:
+  - name: deploy-golden-image
+    image: 'image-registry.openshift-image-registry.svc:5000/openshift/cli:latest'
+    script: |
+      #!/usr/bin/env bash
+
+      set -eu -o pipefail
+
+      if [[ "$(params.verbose)" == "true" ]] ; then
+        set -x
+      fi
+
+      SSH_PUB_KEY=$(cat "/tekton/home/ssh-key-pair/ssh-publickey")
+
+      cat <<-EOF > userdata
+      #cloud-config
+      user: redhat
+      password: redhat
+      chpasswd: { expire: False }
+      ssh_pwauth: False
+      ssh_authorized_keys:
+        - ${SSH_PUB_KEY}
+      EOF
+
+      cat <<-EOF | tee vm.yaml
+      apiVersion: kubevirt.io/v1alpha3
+      kind: VirtualMachine
+      metadata:
+        name: $(params.name)
+        namespace: edt
+      spec:
+        running: true
+        template:
+          metadata:
+            name: $(params.name)
+          spec:
+            domain:
+              cpu:
+                cores: $(params.cores)
+                sockets: 1
+                threads: 1
+              devices:
+                disks:
+                  - bootOrder: 1
+                    disk:
+                      bus: virtio
+                    name: rootdisk
+                  - bootOrder: 2
+                    cdrom:
+                      bus: sata
+                    name: cdromiso
+                interfaces:
+                  - masquerade: {}
+                    model: virtio
+                    name: nic-0
+                networkInterfaceMultiqueue: true
+                rng: {}
+              resources:
+                requests:
+                  memory: $(params.memory)
+            networks:
+              - name: nic-0
+                pod: {}
+            terminationGracePeriodSeconds: 0
+            volumes:
+              - name: rootdisk
+                persistentVolumeClaim:
+                  claimName: rootdisk-pvc-$(params.name)
+              - name: cdromiso
+                persistentVolumeClaim:
+                  claimName: cdrom-pvc-$(params.name)
+        dataVolumeTemplates:
+        - metadata:
+            name: cdrom-pvc-$(params.name)
+          spec:
+            pvc:
+              accessModes:
+              - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 10Gi
+            source:
+              http: 
+                url: $(params.diskimage)
+      ---
+      kind: PersistentVolumeClaim
+      apiVersion: v1
+      metadata:
+        name: rootdisk-pvc-$(params.name)
+        namespace: edt
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: $(params.storagesize)
+        storageClassName: gp2
+        volumeMode: Filesystem
+      EOF
+      oc apply -f vm.yaml
+
+      IP=''
+
+      START_TIME=${SECONDS}
+      while true; do
+        IP=$(oc get pods -n edt -o wide | { grep virt-launcher-golden-image || test $? = 1; } | awk '{print $6}')
+        test ! -z "${IP}" && test "${IP}" != "<none>" && break
+        echo "Waiting for VM to start... $((${SECONDS} - ${START_TIME}))s"
+        sleep 5
+      done
+
+      echo -n "${IP}" | tee $(results.ip.path)
+  - name: waitfor-vm
+    image: 'ssh:latest'
+    script: |
+      #!/usr/bin/env bash
+
+      set -eu -o pipefail
+
+      if [[ "$(params.verbose)" == "true" ]] ; then
+        set -x
+      fi
+
+      IP=$(cat $(results.ip.path))
+
+      START_TIME=${SECONDS}
+      while true; do
+        RESULT=$(ssh -i /tekton/home/ssh-key-pair/ssh-privatekey -o StrictHostKeyChecking=no redhat@${IP} echo "ready" || true)
+        test "${RESULT}" = "ready" && break
+        echo "Waiting for VM to become ready... ($((${SECONDS} - ${START_TIME}))s)"
+        sleep 5
+      done
+  workspaces:
+  - name: secrets
+    mountPath: /tekton/home/ssh-key-pair
+    description: Secret volume containing SSH key pair for VM

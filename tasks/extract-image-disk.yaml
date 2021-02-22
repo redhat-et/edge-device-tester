@@ -1,0 +1,32 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: extract-image-disk
+  namespace: edt
+spec:
+  description: >-
+    Task to extract disk image from a Kubevirt VM.
+  params:
+  - name: verbose
+    description: 'log the commands used during execution'
+    type: string
+    default: 'false'
+  - name: variant
+    description: 'main, o3s or pods'
+  steps:
+  - name: deploy-vm
+    image: 'image-registry.openshift-image-registry.svc:5000/openshift/cli:latest'
+    script: |
+      #!/usr/bin/env bash
+
+      if [[ "$(params.verbose)" == "true" ]] ; then
+        set -x
+      fi
+      set -eu -o pipefail
+
+      VM_POD=$(oc get pods -n edt | grep golden-image | grep virt-launcher | awk '{print $1}')
+      oc exec $VM_POD virsh suspend 1
+      oc cp $VM_POD:/run/kubevirt-private/vmi-disks/rootdisk/disk.img $(workspaces.output.path)/disk-$(params.variant).img
+  workspaces:
+  - name: output
+    description: The asset will be downloaded into the volume backing this workspace

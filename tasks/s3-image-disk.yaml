@@ -1,0 +1,50 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: s3-image-disk
+  namespace: edt
+spec:
+  description: >-
+    This task uploads artifacts to S3.
+  params:
+  - name: s3-bucket
+    description: 'S3 bucket to upload to'
+    type: string
+    default: ''
+  - name: s3-prefix
+    description: 'prefix (path) for S3 keys to use'
+    type: string
+    default: ''
+  - name: s3-acl
+    description: 'ACL for uploaded objects'
+    type: string
+    default: 'private'
+  - name: verbose
+    description: 'log the commands used during execution'
+    type: string
+    default: 'true'
+  - name: variant
+    description: 'main, o3s or pods'
+    default: 'main'
+  steps:
+  - name: s3-image-disk
+    image: 'amazon/aws-cli'
+    script: |
+      #!/usr/bin/env bash
+
+      set -eu -o pipefail
+
+      if [[ "$(params.verbose)" == "true" ]] ; then
+        set -x
+      fi
+
+      aws s3 cp --acl $(params.s3-acl) $(workspaces.output.path)/disk-$(params.variant).img s3://$(params.s3-bucket)/releases/fiot-$(params.variant)/latest/x86_64/fiot-$(params.variant).img
+
+      EOF
+    workingDir: $(workspaces.output.path)
+  workspaces:
+  - name: output
+    description: workspace containing the build recipe
+  - name: aws-creds
+    mountPath: /tekton/home/.aws
+    description: Secret volume containing AWS credentials

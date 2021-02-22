@@ -1,0 +1,69 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: run-ostree-deployment
+  namespace: edt
+spec:
+  description: >-
+    This task runs image builder inside the specified VM.
+  params:
+  - name: ip
+    description: 'IP address of builder VM'
+    type: string
+  - name: user
+    description: 'user to SSH into the VM as'
+    type: string
+    default: 'redhat'
+  - name: verbose
+    description: 'log the commands used during execution'
+    type: string
+    default: 'false'
+  - name: variant
+    description: 'main, o3s or pods'
+  steps:
+  - name: deploy-ostree
+    image: 'ssh:latest'
+    script: |
+        #!/usr/bin/env bash
+
+        set -eu -o pipefail
+
+        if [[ "$(params.verbose)" == "true" ]] ; then
+          set -x
+        fi
+
+        echo "The variant is $(params.variant)"
+
+        SSH_OPTIONS='-i /tekton/home/ssh-key-pair/ssh-privatekey -o StrictHostKeyChecking=no'
+
+        scp ${SSH_OPTIONS} $(workspaces.output.path)/fiot.toml $(params.user)@$(params.ip):~/fiot.toml
+        scp ${SSH_OPTIONS} $(workspaces.output.path)/fiot.ks  $(params.user)@$(params.ip):~/latest-build/
+        
+        ssh -T ${SSH_OPTIONS} $(params.user)@$(params.ip) << 'EOF'
+
+        #Push TOML file to osbuild-composer database
+
+        sudo composer-cli blueprints push ~/fiot.toml
+
+        # Start image building echo "Starting image build..."
+
+        COMPOSEID=$(sudo composer-cli compose start fiot-$(params.variant) fedora-iot-commit | awk '{print $2}')
+        STATUS=$(sudo composer-cli compose status | grep $COMPOSEID | awk '{print $2}')
+
+        while [ $STATUS !=  FINISHED ]; do sleep 60; STATUS=$(sudo composer-cli compose status | grep $COMPOSEID | awk '{print $2}'); echo $STATUS; done
+
+        echo $COMPOSEID > ~/latest-build/uuid.txt
+        echo "Build has finished..."
+
+        sudo composer-cli compose image $COMPOSEID
+        mv $COMPOSEID-commit.tar ~/latest-build/
+        tar -xvf ~/latest-build/$COMPOSEID-commit.tar -C ~/latest-build/ 
+        rm -f ~/latest-build/$COMPOSEID-commit.tar
+        EOF
+    workingDir: $(workspaces.output.path)
+  workspaces:
+  - name: output
+    description: workspace containing the build recipe
+  - name: secrets
+    mountPath: /tekton/home/ssh-key-pair
+    description: Secret volume containing SSH key pair for VM
