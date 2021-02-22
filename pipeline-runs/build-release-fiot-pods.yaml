@@ -20,7 +20,7 @@ spec:
     - name: verbose
       value: 'true'
     - name: ip
-      value: '10.131.0.13'
+      value: '10.129.4.29'
     - name: variant
       value: 'pods'
   serviceAccountName: pipeline
