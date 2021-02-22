@@ -46,6 +46,8 @@ spec:
       value: $(params.url)
     - name: revision
       value: $(params.revision)
+    - name: depth
+      value: "0"
     - name: verbose
       value: $(params.verbose)
     workspaces:
