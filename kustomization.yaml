@@ -4,4 +4,5 @@ bases:
 - base
 - tasks
 - pipelines
+- triggers
 - services
