@@ -30,4 +30,4 @@ spec:
                 -H "content-type: application/json" \
                 --data "${data}" \
                 http://el-ushift-ostree-event-listener-edt.apps.edge-lab.aws.octo.edge-sites.net
-        restartPolicy: OnFailure
+          restartPolicy: OnFailure
