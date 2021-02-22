@@ -91,3 +91,17 @@ spec:
       workspace: workspace
     runAfter:
     - extract-image-disk
+  - name: clean-image-disk
+    params:
+      - name: verbose
+        value: $(params.verbose)
+      - name: variant
+        value: $(params.variant)
+    taskRef:
+      kind: Task
+      name: clean-image-disk
+    workspaces:
+    - name: output
+      workspace: workspace
+    runAfter:
+    - s3-image-disk

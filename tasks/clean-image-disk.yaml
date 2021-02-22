@@ -1,0 +1,37 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: clean-image-disk
+  namespace: edt
+spec:
+  description: >-
+    Task to clean disk image resources such as Kubevirt VM, pvcs, etc.
+  params:
+  - name: verbose
+    description: 'log the commands used during execution'
+    type: string
+    default: 'false'
+  - name: variant
+    description: 'main, o3s or pods'
+  steps:
+  - name: deploy-vm
+    image: 'image-registry.openshift-image-registry.svc:5000/openshift/cli:latest'
+    script: |
+      #!/usr/bin/env bash
+
+      if [[ "$(params.verbose)" == "true" ]] ; then
+        set -x
+      fi
+      set -eu -o pipefail
+
+      VM=$(oc get vm -n edt | grep golden-image | awk '{print $1}')
+      oc delete vm $VM -n edt
+
+      echo "Cleaning golden image VM..."
+      sleep 10
+
+      PVC=$(oc get pvc -n edt | grep golden-image | awk '{print $1}')
+      oc delete pvc $PVC -n edt
+  workspaces:
+  - name: output
+    description: The asset will be downloaded into the volume backing this workspace
