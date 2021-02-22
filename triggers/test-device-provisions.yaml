@@ -1,0 +1,58 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: test-device-provisions
+  namespace: edt
+spec:
+  params:
+    - name: git-repo-url
+      description: 'git repo to use for device config'
+    - name: git-revision
+      description: 'git revision to use for device config'
+
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        generateName: test-device-provisions-
+        namespace: edt
+      spec:
+        serviceAccountName: pipeline
+        timeout: 1h0m0s
+        pipelineRef:
+          name: test-device-provisions
+
+        params:
+        - name: diskimage
+          value: osdisk_fiot-main
+        - name: git-repo
+          value: $(tt.params.git-repo)
+        - name: git-reftag
+          value: $(tt.params.git-revision)
+        - name: cores
+          value: '2'
+        - name: memory
+          value: '2Gi'
+
+        workspaces:
+        - name: ssh-keys
+          secret:
+            secretName: vm-ssh-keys
+        - name: aws-creds
+          secret:
+            secretName: aws-creds
+
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: test-device-provisions
+  namespace: edt
+spec:
+  params:
+    - name: git-repo-url
+      value: $(body.repository.url)
+    - name: git-commit-id
+      value: $(body.head_commit.id)
+    - name: git-ref
+      value: $(body.ref)

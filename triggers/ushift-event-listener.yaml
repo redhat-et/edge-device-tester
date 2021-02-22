@@ -1,0 +1,31 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: ushift-event-listener
+  namespace: edt
+spec:
+  serviceAccountName: pipeline
+  triggers:
+    - bindings:
+      - ref: test-device-provisions
+      template:
+        name: test-device-provisions
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: el-ushift-event-listener
+  namespace: edt
+  labels:
+    app.kubernetes.io/managed-by: EventListener
+    app.kubernetes.io/part-of: Triggers
+    eventlistener: ushift-event-listener
+spec:
+  host: el-ushift-event-listener-edt.apps.edge-lab.aws.octo.edge-sites.net
+  port:
+    targetPort: http-listener
+  to:
+    kind: Service
+    name: el-ushift-event-listener
+    weight: 100
+  wildcardPolicy: None
