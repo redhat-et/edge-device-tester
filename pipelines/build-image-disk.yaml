@@ -58,9 +58,9 @@ spec:
   - name: extract-image-disk
     params:
       - name: verbose
-        value: 'true'
+        value: $(params.verbose)
       - name: variant
-        value: 'main'
+        value: $(params.variant)
     taskRef:
       kind: Task
       name: extract-image-disk
@@ -72,15 +72,15 @@ spec:
   - name: s3-image-disk
     params:
       - name: verbose
-        value: 'true'
+        value: $(params.verbose)
       - name: variant
-        value: 'main'
+        value: $(params.variant)
       - name: s3-bucket
-        value: ''
+        value: $(params.s3-bucket)
       - name: s3-prefix
-        value: ''
+        value: $(params.s3-prefix)
       - name: s3-acl
-        value: ''
+        value: $(params.s3-acl)
     taskRef:
       kind: Task
       name: s3-image-disk
