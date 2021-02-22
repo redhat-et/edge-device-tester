@@ -65,8 +65,8 @@ metadata:
 spec:
   params:
     - name: git-repo-url
-      value: $(body.repository.url)
-    - name: git-commit-id
+      value: $(body.repository.git_url)
+    - name: git-revision
       value: $(body.head_commit.id)
     - name: git-ref
       value: $(body.ref)

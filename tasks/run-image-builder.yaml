@@ -70,10 +70,10 @@ spec:
       # Create build folder on builder VM.
       ${ssh_cmd} mkdir builds/${buildid}
 
-      echo -n "${BASEOS_NAME}" | tee $(results.baseos-name)
-      echo -n "${BASEOS_REL}" | tee $(results.baseos-release)
-      echo -n "${variant}" | tee $(results.variant)
-      echo -n "${buildid}" | tee $(results.buildid)
+      echo -n "${BASEOS_NAME}" | tee $(results.baseos-name.path)
+      echo -n "${BASEOS_REL}" | tee $(results.baseos-release.path)
+      echo -n "${variant}" | tee $(results.variant.path)
+      echo -n "${buildid}" | tee $(results.buildid.path)
   - name: image-builder-compose
     image: 'nettools:latest'
     script: |
