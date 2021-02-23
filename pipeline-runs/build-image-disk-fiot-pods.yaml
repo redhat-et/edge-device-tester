@@ -1,0 +1,40 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: build-image-disk-fiot-pods
+  namespace: edt
+spec:
+  pipelineRef:
+    name: build-image-disk
+  params:
+    - name: diskimage
+      value: 'https://s3.eu-central-1.amazonaws.com/cdn.redhat.edge-lab.net/releases/fiot-pods/latest/x86_64/fiot-pods-installer.iso'
+    - name: s3-bucket
+      value: 'cdn.redhat.edge-lab.net'
+    - name: s3-prefix
+      value: ''
+    - name: s3-acl
+      value: 'public-read'
+    - name: verbose
+      value: 'true'
+    - name: variant
+      value: 'pods'
+  serviceAccountName: pipeline
+  timeout: 2h0m0s
+  workspaces:
+  - name: workspace
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: gp2
+        volumeMode: Filesystem
+  - name: secrets
+    secret:
+      secretName: vm-ssh-keys
+  - name: aws-creds
+    secret:
+      secretName: aws-creds
