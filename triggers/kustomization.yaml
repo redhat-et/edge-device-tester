@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: edt
+resources:
+- build-release.yaml
+- test-device-provisions.yaml
+- ushift-event-listener.yaml
+- ushift-ostree-event-listener.yaml

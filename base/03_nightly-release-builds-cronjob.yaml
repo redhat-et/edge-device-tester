@@ -1,0 +1,33 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: trigger-nightly-release-build
+spec:
+  schedule: "1 0 * * *"
+  concurrencyPolicy: "Allow"
+  startingDeadlineSeconds: 300
+  suspend: false
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: emulate-webhoook-event
+            image: 'ubi8/ubi'
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - |
+              data="{\"ref\": \"refs/heads/main\", \"repository\": {\"git_url\": \"git@github.com:redhat-et/ushift-ostree.git\"}, \"head_commit\": {\"id\": \"main\"}}"
+
+              # sig=$(echo -n "${data}" | openssl dgst -sha1 -hmac "%{WEBHOOK_SECRET}" | awk '{print "X-Hub-Signature: sha1="$2}')
+              # curl ... -H "${sig}"
+
+              curl -X POST \
+                -H "content-type: application/json" \
+                --data "${data}" \
+                http://el-ushift-ostree-event-listener-edt.apps.edge-lab.aws.octo.edge-sites.net
+          restartPolicy: OnFailure

@@ -1,0 +1,31 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: ushift-ostree-event-listener
+  namespace: edt
+spec:
+  serviceAccountName: pipeline
+  triggers:
+    - bindings:
+      - ref: build-release
+      template:
+        name: build-release
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: el-ushift-ostree-event-listener
+  namespace: edt
+  labels:
+    app.kubernetes.io/managed-by: EventListener
+    app.kubernetes.io/part-of: Triggers
+    eventlistener: ushift-ostree-event-listener
+spec:
+  host: el-ushift-ostree-event-listener-edt.apps.edge-lab.aws.octo.edge-sites.net
+  port:
+    targetPort: http-listener
+  to:
+    kind: Service
+    name: el-ushift-ostree-event-listener
+    weight: 100
+  wildcardPolicy: None
