@@ -6,7 +6,6 @@ metadata:
 spec:
   description: >-
     This task runs image builder inside the specified VM.
-
   params:
   - name: ip
     description: 'IP address of builder VM'
@@ -21,61 +20,10 @@ spec:
     default: 'false'
   - name: variant
     description: 'main, o3s or pods'
-
-  results:
-    - name: baseos-name
-      description: baseos shortname (e.g. "fiot")
-    - name: baseos-release
-      description: baseos release (e.g. "33")
-    - name: variant
-      description: variant layered onto baseos (e.g. "main")
-    - name: buildid
-      description: buildid of the current build (e.g. "20210101.0")
-
+    default: 'o3s'
   steps:
-  - name: prepare
-    image: 'nettools:latest'
-    script: |
-      #!/usr/bin/env bash
-
-      set -eu -o pipefail
-
-      if [[ "$(params.verbose)" == "true" ]] ; then
-        set -x
-      fi
-
-      SSH_OPTIONS='-i /tekton/home/ssh-key-pair/ssh-privatekey -o StrictHostKeyChecking=no'
-      ssh_cmd="ssh ${SSH_OPTIONS} $(params.user)@$(params.ip)"
-
-      BASEOS_NAME="fiot"
-      BASEOS_REL="33"
-
-      # use the name of the branch as variant name
-      variant=$(cd $(workspaces.output.path) && git name-rev --name-only --exclude="tags*" HEAD)
-      variant=${variant%~*}
-      variant=${variant##*/}
-
-      # generate a buildid
-      build_timestamp=$(date -u +%Y%m%d)
-      last_buildid=$( ${ssh_cmd} "(cd builds; ls -d ${build_timestamp}* 2>/dev/null)" | sort -V | tail -n 1 ) || true
-
-      if [ "$last_buildid" != "" ]; then
-        dailyid=${last_buildid#*.}
-        dailyid=$((dailyid+1))
-        buildid="${build_timestamp}.${dailyid}"
-      else
-        buildid="${build_timestamp}.0"
-      fi
-
-      # Create build folder on builder VM.
-      ${ssh_cmd} mkdir builds/${buildid}
-
-      echo -n "${BASEOS_NAME}" | tee $(results.baseos-name.path)
-      echo -n "${BASEOS_REL}" | tee $(results.baseos-release.path)
-      echo -n "${variant}" | tee $(results.variant.path)
-      echo -n "${buildid}" | tee $(results.buildid.path)
   - name: image-builder-compose
-    image: 'nettools:latest'
+    image: 'ssh:latest'
     script: |
         #!/usr/bin/env bash
 

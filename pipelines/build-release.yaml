@@ -33,6 +33,9 @@ spec:
   - name: ip
     description: 'IP address of the builder VM'
     type: string
+  - name: variant
+    description: 'main, o3s or pods'
+    type: string
   tasks:
   - name: fetch-configs
     taskRef:
@@ -60,7 +63,7 @@ spec:
     - name: user
       value: 'redhat'
     - name: variant
-      value: ''
+      value: $(params.variant)
     - name: verbose
       value: $(params.verbose)
     workspaces:
@@ -86,7 +89,7 @@ spec:
     - name: s3-acl
       value: $(params.s3-acl)
     - name: variant
-      value: ''
+      value: $(params.variant)
     - name: verbose
       value: $(params.verbose)
     runAfter:
