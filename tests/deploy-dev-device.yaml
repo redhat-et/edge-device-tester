@@ -8,7 +8,7 @@ spec:
     - name: diskimage
       value: osdisk_fiot-main
     - name: git-repo
-      value: 'https://github.com/redhat-et/ushift'
+      value: 'git@github.com/redhat-et/ushift.git'
     - name: git-reftag
       value: main
     - name: cores
