@@ -74,7 +74,7 @@ spec:
 
       GIT_REPO=$(params.git-repo)
       if [[ ! "$GIT_REPO" =~ ^git@github.com ]]; then
-        echo "'git-repo' must be an SSH access URL with the format 'git@github.com:OWNER/REPO.git[//SUBDIR]'"
+        echo "'git-repo' must be an SSH access URL with the format 'git@github.com:OWNER/REPO.git[//SUBDIR]' but got '${GIT_REPO}' instead."
         exit 1
       fi
       GIT_REPO=$(echo ${GIT_REPO} | sed -E 's|^git@github.com[/:]([a-zA-Z0-9-]+)/([a-zA-Z0-9-]+)(.git)([a-z0-9/-]*)|git@github.com/\1/\2\4|')
