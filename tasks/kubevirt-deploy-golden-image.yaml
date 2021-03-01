@@ -151,7 +151,7 @@ spec:
 
       echo -n "${IP}" | tee $(results.ip.path)
   - name: waitfor-vm
-    image: 'ssh:latest'
+    image: 'nettools:latest'
     script: |
       #!/usr/bin/env bash
 

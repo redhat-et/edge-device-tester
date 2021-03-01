@@ -33,7 +33,7 @@ spec:
     default: 'o3s'
   steps:
   - name: s3-upload
-    image: 'ssh:latest'
+    image: 'nettools:latest'
     script: |
       #!/usr/bin/env bash
 

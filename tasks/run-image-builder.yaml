@@ -23,7 +23,7 @@ spec:
     default: 'o3s'
   steps:
   - name: image-builder-compose
-    image: 'ssh:latest'
+    image: 'nettools:latest'
     script: |
         #!/usr/bin/env bash
 

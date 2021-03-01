@@ -22,7 +22,7 @@ spec:
     description: 'main, o3s or pods'
   steps:
   - name: deploy-ostree
-    image: 'ssh:latest'
+    image: 'nettools:latest'
     script: |
         #!/usr/bin/env bash
 
