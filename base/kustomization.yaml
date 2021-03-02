@@ -4,3 +4,4 @@ resources:
 - 00_namespace.yaml
 - 00_serviceaccount.yaml
 - 01_image_streams_local_lookup.yaml
+- 02_janitor-cronjob.yaml

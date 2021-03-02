@@ -1,0 +1,42 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: cleanup-pipelineruns
+spec:
+  schedule: "0 0 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          serviceAccount: pipeline
+          containers:
+            - name: cleanup-pipelineruns
+              image: 'image-registry.openshift-image-registry.svc:5000/openshift/cli:latest'
+              env:
+                - name: MAX_AGE
+                  value: '259200'
+              command:
+              - /bin/sh
+              - -c
+              - |
+                #!/usr/bin/env bash
+
+                set -eu -o pipefail
+
+                current_time=$(date +%s)
+
+                runs="$(oc get pipelinerun -o jsonpath='{range .items[?(@.status.completionTime)]}{.status.completionTime}{" "}{.metadata.name}{"\n"}{end}' | sort)"
+                echo "${runs}" | while IFS= read -r line ; do
+                  name=$(echo $line | cut -d' ' -f2)
+                  completion_time=$(date -d "$(echo $line | cut -d' ' -f1)" +%s)
+                  age=$(( $current_time - $completion_time ))
+
+                  if [[ ($age > $MAX_AGE) ]]; then
+                    echo "${name} completed ${age}s ago, max age is ${MAX_AGE}s --> deleting"
+                    oc delete pipelinerun $(echo $line | cut -d' ' -f2)
+                  else
+                    echo "${name} completed ${age}s ago, max age is ${MAX_AGE}s"
+                  fi
+                done
