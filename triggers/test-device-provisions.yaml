@@ -7,7 +7,7 @@ spec:
   params:
     - name: git-repo-url
       description: 'git repo to use for device config'
-    - name: git-revision
+    - name: git-reftag
       description: 'git revision to use for device config'
 
   resourcetemplates:
@@ -28,7 +28,7 @@ spec:
         - name: git-repo
           value: $(tt.params.git-repo-url)
         - name: git-reftag
-          value: $(tt.params.git-revision)
+          value: $(tt.params.git-reftag)
         - name: cores
           value: '2'
         - name: memory
@@ -54,5 +54,5 @@ spec:
       value: $(body.repository.ssh_url)
     - name: git-commit-id
       value: $(body.head_commit.id)
-    - name: git-ref
+    - name: git-reftag
       value: $(body.ref)
