@@ -16,7 +16,7 @@ spec:
               image: 'image-registry.openshift-image-registry.svc:5000/openshift/cli:latest'
               env:
                 - name: MAX_AGE
-                  value: '259200'
+                  value: '86400'
               command:
               - /bin/sh
               - -c
@@ -33,7 +33,7 @@ spec:
                   completion_time=$(date -d "$(echo $line | cut -d' ' -f1)" +%s)
                   age=$(( $current_time - $completion_time ))
 
-                  if [[ ($age > $MAX_AGE) ]]; then
+                  if (($age > $MAX_AGE)); then
                     echo "${name} completed ${age}s ago, max age is ${MAX_AGE}s --> deleting"
                     oc delete pipelinerun $(echo $line | cut -d' ' -f2)
                   else
