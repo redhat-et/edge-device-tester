@@ -24,10 +24,6 @@ spec:
     type: string
     default: 'false'
 
-  results:
-    - name: ip
-      description: IP address of the deployed VM
-
   steps:
   - name: waitfor-ssh
     image: 'nettools:latest'
