@@ -13,7 +13,7 @@ spec:
   - name: sha256_checksum
     value: ''
   - name: image
-    value: 'image-registry.openshift-image-registry.svc:5000/edt/osdisk_fiot-main:latest'
+    value: osdisk_fiot-main
   - name: verbose
     value: 'true'
   serviceAccountName: pipeline

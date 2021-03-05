@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  name: build-containerdisk-rhel8
+  name: build-containerdisk-fiot-o3s
   namespace: edt
 spec:
   pipelineRef:
@@ -9,23 +9,23 @@ spec:
   params:
   - name: url
     value: >-
-      YOUR_DOWNLOAD_URL_FROM_ACCESS_REDHAT_COM
+      https://s3.eu-central-1.amazonaws.com/cdn.redhat.edge-lab.net/releases/fiot-o3s/latest/x86_64/fiot-o3s.img
   - name: sha256_checksum
-    value: '321c20a732419472ba584ea34cd2cab79db2ea1790abe467ea3c0e2ca521a6b7'
+    value: ''
   - name: image
-    value: osdisk_rhel8
+    value: osdisk_fiot-o3s
   - name: verbose
     value: 'true'
   serviceAccountName: pipeline
   timeout: 1h0m0s
-  workspaces: 
-  - name: workspace 
-    volumeClaimTemplate: 
+  workspaces:
+  - name: workspace
+    volumeClaimTemplate:
       spec:
         accessModes:
           - ReadWriteOnce
         resources:
           requests:
-            storage: 4Gi
+            storage: 10Gi
         storageClassName: gp2
         volumeMode: Filesystem

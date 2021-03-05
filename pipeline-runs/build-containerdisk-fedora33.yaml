@@ -13,7 +13,7 @@ spec:
   - name: sha256_checksum
     value: '7a2b3cc3bb3a92ce927e685d33efe8efd75577efbe207b267cb66f68afae7ce9'
   - name: image
-    value: 'image-registry.openshift-image-registry.svc:5000/edt/osdisk_fedora33:latest'
+    value: osdisk_fedora33
   - name: verbose
     value: 'true'
   serviceAccountName: pipeline
