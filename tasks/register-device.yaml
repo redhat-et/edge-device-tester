@@ -30,6 +30,8 @@ spec:
   results:
     - name: mac-address
       description: MAC address registered
+    - name: variant
+      description: uShift variant detected from git-reftag
 
   steps:
   - name: generate-mac
@@ -91,6 +93,13 @@ spec:
       blueprint: ${GIT_REPO}
       ref: ${GIT_REF}
       EOF
+
+      VARIANT=${GIT_REF%%-*}
+      if [[ ! "${VARIANT}" =~ ^(main|o3s|pods)$ ]]; then
+        VARIANT="main"
+      fi
+      echo -e "\nDetected base OS variant:"
+      echo -n "${VARIANT}" | tee $(results.variant.path)
 
   - name: upload-registration
     image: docker.io/amazon/aws-cli:2.0.52@sha256:1506cec98a7101c935176d440a14302ea528b8f92fcaf4a6f1ea2d7ecef7edc4 #tag: 2.0.52

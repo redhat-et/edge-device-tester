@@ -4,5 +4,6 @@ namespace: edt
 resources:
 - build-release.yaml
 - test-device-provisions.yaml
+- test-ushift-deploys.yaml
 - ushift-event-listener.yaml
 - ushift-ostree-event-listener.yaml

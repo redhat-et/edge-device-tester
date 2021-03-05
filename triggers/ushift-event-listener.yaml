@@ -7,9 +7,9 @@ spec:
   serviceAccountName: pipeline
   triggers:
     - bindings:
-      - ref: test-device-provisions
+      - ref: test-ushift-deploys
       template:
-        name: test-device-provisions
+        name: test-ushift-deploys
 ---
 apiVersion: route.openshift.io/v1
 kind: Route

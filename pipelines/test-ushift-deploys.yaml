@@ -1,0 +1,153 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: test-ushift-deploys
+  namespace: edt
+spec:
+  workspaces:
+  - name: aws-creds
+  - name: ssh-keys
+
+  params:
+  - name: base-os
+    description: 'base OS to deploy ushift with'
+    type: string
+    default: "fiot"
+  - name: git-repo
+    description: 'git repo to use for device config'
+    type: string
+  - name: git-reftag
+    description: 'git reftag to use for device config'
+    type: string
+  - name: cores
+    description: 'cores'
+    type: string
+    default: '2'
+  - name: memory
+    description: 'memory'
+    type: string
+    default: '2Gi'
+  - name: verbose
+    description: 'log the commands used during execution'
+    type: string
+    default: 'false'
+
+  tasks:
+  - name: register-device
+    taskRef:
+      name: register-device
+      kind: Task
+    params:
+    - name: mac-address
+      value: 'auto'
+    - name: git-repo
+      value: $(params.git-repo)
+    - name: git-reftag
+      value: $(params.git-reftag)
+    - name: verbose
+      value: $(params.verbose)
+    workspaces:
+    - name: aws-creds
+      workspace: aws-creds
+
+  - name: deploy-device
+    taskRef:
+      name: kubevirt-deploy-vm
+      kind: Task
+    params:
+    - name: name
+      value: $(context.pipelineRun.name)
+    - name: namespace
+      value: 'edt'
+    - name: cores
+      value: $(params.cores)
+    - name: memory
+      value: $(params.memory)
+    - name: mac-address
+      value: $(tasks.register-device.results.mac-address)
+    - name: diskimage
+      value: osdisk_$(params.base-os)-$(tasks.register-device.results.variant)
+    - name: storagesize
+      value: ''
+    - name: storageclass
+      value: ''
+    - name: add-userpass
+      value: 'redhat:redhat'
+    - name: add-ssh-key
+      value: 'false'
+    - name: verbose
+      value: $(params.verbose)
+    runAfter:
+    - register-device
+    workspaces:
+    - name: ssh-keys
+      workspace: ssh-keys
+
+  - name: waitfor-ssh
+    taskRef:
+      name: kubevirt-waitfor-ssh
+      kind: Task
+    params:
+    - name: ip
+      value: $(tasks.deploy-device.results.ip)
+    runAfter:
+    - deploy-device
+    workspaces:
+    - name: ssh-keys
+      workspace: ssh-keys
+
+  - name: waitfor-cluster-up
+    taskRef:
+      name: waitfor-cluster-up
+      kind: Task
+    params:
+    - name: ip
+      value: $(tasks.deploy-device.results.ip)
+    runAfter:
+    - waitfor-ssh
+    workspaces:
+    - name: ssh-keys
+      workspace: ssh-keys
+
+  - name: unregister-device
+    taskRef:
+      name: unregister-device
+      kind: Task
+    params:
+      - name: mac-address
+        value: $(tasks.register-device.results.mac-address)
+      - name: verbose
+        value: $(params.verbose)
+    runAfter:
+    - waitfor-cluster-up
+    workspaces:
+    - name: aws-creds
+      workspace: aws-creds
+
+  finally:
+  - name: undeploy-device
+    taskRef:
+      name: openshift-client
+      kind: ClusterTask
+    params:
+    - name: ARGS
+      value:
+      - delete
+      - -n
+      - edt
+      - vm/$(context.pipelineRun.name)
+  # Ideally, we'd also unregister the device in a 'finally' section, but
+  # OpenShift's version of Tekton (v0.16.3) is too old and doesn't support
+  # using task results as parameters yet...
+  # - name: unregister-device
+  #   taskRef:
+  #     name: unregister-device
+  #     kind: Task
+  #   params:
+  #     - name: mac-address
+  #       value: $(tasks.register-device.results.mac-address)
+  #     - name: verbose
+  #       value: $(params.verbose)
+  #   workspaces:
+  #   - name: aws-creds
+  #     workspace: aws-creds

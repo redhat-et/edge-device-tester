@@ -1,0 +1,46 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: waitfor-cluster-up
+  namespace: edt
+spec:
+  description: >-
+    This task waits for a cluster inside a VM to become available.
+
+  params:
+  - name: ip
+    description: 'IP to connect to'
+    type: string
+  - name: port
+    description: 'port to connect to'
+    type: string
+    default: '22'
+  - name: user
+    description: 'user to connect as'
+    type: string
+    default: 'redhat'
+  - name: verbose
+    description: 'log the commands used during execution'
+    type: string
+    default: 'false'
+
+  steps:
+  - name: waitfor-cluster-up
+    image: 'nettools:latest'
+    script: |
+      #!/usr/bin/env bash
+
+      set -eu -o pipefail
+
+      if [[ "$(params.verbose)" == "true" ]] ; then
+        set -x
+      fi
+
+      sleep 1800
+
+      exit 1
+
+  workspaces:
+  - name: ssh-keys
+    mountPath: /tekton/home/ssh-key-pair
+    description: Secret volume containing SSH key pair for VM

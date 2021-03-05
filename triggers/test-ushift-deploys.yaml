@@ -1,0 +1,58 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: test-ushift-deploys
+  namespace: edt
+spec:
+  params:
+    - name: git-repo-url
+      description: 'git repo to use for device config'
+    - name: git-reftag
+      description: 'git revision to use for device config'
+
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        generateName: test-ushift-deploys-
+        namespace: edt
+      spec:
+        serviceAccountName: pipeline
+        timeout: 1h0m0s
+        pipelineRef:
+          name: test-ushift-deploys
+
+        params:
+        - name: base-os
+          value: fiot
+        - name: git-repo
+          value: $(tt.params.git-repo-url)
+        - name: git-reftag
+          value: $(tt.params.git-reftag)
+        - name: cores
+          value: '2'
+        - name: memory
+          value: '2Gi'
+
+        workspaces:
+        - name: ssh-keys
+          secret:
+            secretName: vm-ssh-keys
+        - name: aws-creds
+          secret:
+            secretName: aws-creds
+
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: test-ushift-deploys
+  namespace: edt
+spec:
+  params:
+    - name: git-repo-url
+      value: $(body.repository.ssh_url)
+    - name: git-commit-id
+      value: $(body.head_commit.id)
+    - name: git-reftag
+      value: $(body.ref)
