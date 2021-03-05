@@ -5,10 +5,8 @@ metadata:
   namespace: edt
 spec:
   params:
-    - name: git-repo-url
+    - name: imagestream-name
       description: 'git repo to use for device config'
-    - name: git-reftag
-      description: 'git revision to use for device config'
 
   resourcetemplates:
     - apiVersion: tekton.dev/v1beta1
@@ -24,11 +22,11 @@ spec:
 
         params:
         - name: diskimage
-          value: osdisk_fiot-main
+          value: $(tt.params.imagestream-name)
         - name: git-repo
-          value: $(tt.params.git-repo-url)
+          value: 'git@github.com:redhat-et/ushift.git'
         - name: git-reftag
-          value: $(tt.params.git-reftag)
+          value: ci
         - name: cores
           value: '2'
         - name: memory
@@ -50,9 +48,7 @@ metadata:
   namespace: edt
 spec:
   params:
-    - name: git-repo-url
-      value: $(body.repository.ssh_url)
-    - name: git-commit-id
-      value: $(body.head_commit.id)
-    - name: git-reftag
-      value: $(body.ref)
+  - name: imagestream-name
+    value: $(body.metadata.name)
+  - name: imagestream-namespace
+    value: $(body.metadata.namespace)

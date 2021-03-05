@@ -1,0 +1,57 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: imagestream-event-listener
+  namespace: edt
+spec:
+  serviceAccountName: pipeline
+  triggers:
+  - bindings:
+    - ref: test-device-provisions
+    template:
+      name: test-device-provisions
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: imagestream-event-listener
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: imagestream-event-listener
+rules:
+  - verbs:
+      - get
+      - list
+      - watch
+    apiGroups:
+      - image.openshift.io
+    resources:
+      - imagestreams
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: imagestream-event-listener
+subjects:
+  - kind: ServiceAccount
+    name: imagestream-event-listener
+    namespace: edt
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: imagestream-event-listener
+---
+apiVersion: sources.knative.dev/v1
+kind: ApiServerSource
+metadata:
+  name: imagestream
+spec:
+  mode: Resource
+  resources:
+  - apiVersion: image.openshift.io/v1
+    kind: ImageStream
+  serviceAccountName: imagestream-event-listener
+  sink:
+    uri: http://el-imagestream-event-listener:8080
