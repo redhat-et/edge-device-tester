@@ -4,3 +4,4 @@ bases:
 - 01_registry
 - 02_virtualization
 - 03_pipelines
+- 04_serverless
