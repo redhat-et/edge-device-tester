@@ -7,6 +7,9 @@ spec:
   description: >-
     Task to extract disk image from a Kubevirt VM.
   params:
+  - name: name
+    description: 'name of VM to extract image disk from'
+    type: string
   - name: verbose
     description: 'log the commands used during execution'
     type: string
@@ -24,7 +27,7 @@ spec:
       fi
       set -eu -o pipefail
 
-      VM_POD=$(oc get pods -n edt | grep golden-image | grep virt-launcher | awk '{print $1}')
+      VM_POD=$(oc get pods -n edt | grep $(params.name) | grep virt-launcher | awk '{print $1}')
       oc exec $VM_POD virsh suspend 1
       oc cp $VM_POD:/run/kubevirt-private/vmi-disks/rootdisk/disk.img $(workspaces.output.path)/disk-$(params.variant).img
   workspaces:

@@ -8,6 +8,7 @@ spec:
   - name: secrets
   - name: workspace
   - name: aws-creds
+
   params:
   - name: diskimage
     type: string
@@ -30,13 +31,14 @@ spec:
     description: 'main, o3s or pods'
     type: string
     default: 'main'
+
   tasks:
   - name: deploy-golden-image
     params:
       - name: name
-        value: golden-image
+        value: $(context.pipelineRun.name)
       - name: namespace
-        value: $(context.taskRun.namespace)
+        value: $(context.pipelineRun.namespace)
       - name: cores
         value: '4'
       - name: memory
@@ -55,8 +57,11 @@ spec:
     workspaces:
     - name: secrets
       workspace: secrets
+
   - name: extract-image-disk
     params:
+      - name: name
+        value: $(context.pipelineRun.name)
       - name: verbose
         value: $(params.verbose)
       - name: variant
@@ -69,6 +74,7 @@ spec:
       workspace: workspace
     runAfter:
     - deploy-golden-image
+
   - name: s3-image-disk
     params:
       - name: verbose
@@ -91,8 +97,11 @@ spec:
       workspace: workspace
     runAfter:
     - extract-image-disk
+
   - name: clean-image-disk
     params:
+      - name: name
+        value: $(context.pipelineRun.name)
       - name: verbose
         value: $(params.verbose)
       - name: variant

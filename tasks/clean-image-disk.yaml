@@ -7,6 +7,9 @@ spec:
   description: >-
     Task to clean disk image resources such as Kubevirt VM, pvcs, etc.
   params:
+  - name: name
+    description: 'name of VM to clean up'
+    type: string
   - name: verbose
     description: 'log the commands used during execution'
     type: string
@@ -24,13 +27,13 @@ spec:
       fi
       set -eu -o pipefail
 
-      VM=$(oc get vm -n edt | grep golden-image | awk '{print $1}')
+      VM=$(oc get vm -n edt | grep $(params.name) | awk '{print $1}')
       oc delete vm $VM -n edt
 
       echo "Cleaning golden image VM..."
       sleep 10
 
-      PVC=$(oc get pvc -n edt | grep golden-image | awk '{print $1}')
+      PVC=$(oc get pvc -n edt | grep $(params.name) | awk '{print $1}')
       oc delete pvc $PVC -n edt
   workspaces:
   - name: output

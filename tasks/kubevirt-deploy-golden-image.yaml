@@ -144,7 +144,7 @@ spec:
 
       START_TIME=${SECONDS}
       while true; do
-        IP=$(oc get pods -n edt -o wide | { grep virt-launcher-golden-image || test $? = 1; } | awk '{print $6}')
+        IP=$(oc get pods -n edt -o wide | { grep virt-launcher-$(params.name) || test $? = 1; } | awk '{print $6}')
         test ! -z "${IP}" && test "${IP}" != "<none>" && break
         echo "Waiting for VM to start... $((${SECONDS} - ${START_TIME}))s"
         sleep 5
