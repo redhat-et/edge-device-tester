@@ -107,8 +107,8 @@ spec:
                 persistentVolumeClaim:
                   claimName: rootdisk-pvc-$(params.name)
               - name: cdromiso
-                persistentVolumeClaim:
-                  claimName: cdrom-pvc-$(params.name)
+                dataVolume:
+                  name: cdrom-pvc-$(params.name)
         dataVolumeTemplates:
         - metadata:
             name: cdrom-pvc-$(params.name)
@@ -137,6 +137,7 @@ spec:
         storageClassName: gp2
         volumeMode: Filesystem
       EOF
+
       oc apply -f vm.yaml
 
       IP=''
