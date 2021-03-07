@@ -1,0 +1,8 @@
+apiVersion: aws-efs.managed.openshift.io/v1alpha1
+kind: SharedVolume
+metadata:
+  name: builds
+  namespace: edt
+spec:
+  accessPointID: fsap-00c21cba7acd9af13
+  fileSystemID: fs-5df6f625
