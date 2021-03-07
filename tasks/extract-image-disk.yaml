@@ -6,6 +6,7 @@ metadata:
 spec:
   description: >-
     Task to extract disk image from a Kubevirt VM.
+
   params:
   - name: name
     description: 'name of VM to extract image disk from'
@@ -16,9 +17,10 @@ spec:
     default: 'false'
   - name: variant
     description: 'main, o3s or pods'
+
   steps:
   - name: deploy-vm
-    image: 'image-registry.openshift-image-registry.svc:5000/openshift/cli:latest'
+    image: 'clitools:latest'
     script: |
       #!/usr/bin/env bash
 
@@ -28,8 +30,9 @@ spec:
       set -eu -o pipefail
 
       VM_POD=$(oc get pods -n edt | grep $(params.name) | grep virt-launcher | awk '{print $1}')
-      oc exec $VM_POD virsh suspend 1
+      virtctl pause vm $(params.name)
       oc cp $VM_POD:/run/kubevirt-private/vmi-disks/rootdisk/disk.img $(workspaces.output.path)/disk-$(params.variant).img
+
   workspaces:
   - name: output
     description: The asset will be downloaded into the volume backing this workspace
