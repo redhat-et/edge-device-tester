@@ -1,0 +1,14 @@
+FROM registry.access.redhat.com/ubi8/ubi:8.3
+
+RUN mkdir /root/tmp && cd /root/tmp && \
+    curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest-4.6/openshift-client-linux.tar.gz | tar xz && \
+    curl -L -o virtctl https://github.com/kubevirt/kubevirt/releases/download/v0.34.2/virtctl-v0.34.2-linux-amd64 && \
+    curl -L https://mirror.openshift.com/pub/openshift-v4/clients/pipeline/0.13.1/tkn-linux-amd64-0.13.1.tar.gz | tar xz && \
+    curl -L https://mirror.openshift.com/pub/openshift-v4/clients/serverless/latest/kn-linux-amd64-0.19.1.tar.gz | tar xz && \
+    chown root. {oc,virtctl,tkn,kn} && \
+    chmod 555 {oc,virtctl,tkn,kn} && \
+    mv {oc,virtctl,tkn,kn} /usr/bin && \
+    ln -s /usr/bin/oc /usr/bin/kubectl && \
+    cd && rm -r /root/tmp
+
+CMD ["/usr/bin/bash"]
