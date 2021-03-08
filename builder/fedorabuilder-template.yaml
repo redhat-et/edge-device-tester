@@ -100,7 +100,7 @@ spec:
               runcmd:
               - [ systemctl, enable, osbuild-composer.socket]
               - [ systemctl, start, osbuild-composer.socket]
-              - [ dnf, module, enable, -y, crio-o:1.20]
+              - [ dnf, module, enable, -y, cri-o:1.20]
           name: cloudinitdisk
 ---
 apiVersion: v1
