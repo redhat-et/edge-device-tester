@@ -2,7 +2,6 @@ apiVersion: kubevirt.io/v1alpha3
 kind: VirtualMachine
 metadata:
   labels:
-    app: fedorabuilder-vm
     vm.kubevirt.io/template: fedora-server-large-v0.11.3
     vm.kubevirt.io/template.revision: '1'
     vm.kubevirt.io/template.version: v0.12.4
@@ -35,6 +34,7 @@ spec:
   template:
     metadata:
       labels:
+        app: fedorabuilder-vm
         kubevirt.io/domain: fedorabuilder-vm
         kubevirt.io/size: large
         vm.kubevirt.io/name: fedorabuilder-vm
@@ -76,14 +76,14 @@ spec:
             name: fedorabuilder-vm-rootdisk-ntaoz
           name: rootdisk
         - cloudInitNoCloud:
-            userData: |
+            userData: |-
               #cloud-config
               user: redhat
               password: redhat
               chpasswd:
                 expire: false
-              ssh-authorized-keys:
-              - ssh-rsa AAAAB3NzaK8L93bWxnyp test@test.com
+              ssh_authorized_keys:
+                - ssh-rsa AAAAB3NzaK8L93bWxnyp test@test.com
               package_upgrade: true
               yum_repos:
                 kubernetes:
@@ -100,7 +100,7 @@ spec:
               runcmd:
               - [ systemctl, enable, osbuild-composer.socket]
               - [ systemctl, start, osbuild-composer.socket]
-              - [ dnf, module, enable, crio-o:1.20]
+              - [ dnf, module, enable, -y, crio-o:1.20]
           name: cloudinitdisk
 ---
 apiVersion: v1
@@ -109,7 +109,7 @@ metadata:
   name: fedorabuilder-vm
 spec:
   selector:
-    kubevirt.io/domain: fedorabuilder-vm
+    app: fedorabuilder-vm
   ports:
     - port: 22
       name: ssh

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: fedorabuilder-vm
+spec:
+  selector:
+    app: fedorabuilder-vm
+  ports:
+    - port: 22
+      name: ssh
+      protocol: TCP
