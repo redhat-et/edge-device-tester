@@ -46,7 +46,7 @@ spec:
       - name: diskimage
         value: $(params.diskimage)
       - name: storagesize
-        value: '5Gi'
+        value: '10Gi'
       - name: storageclass
         value: gp2
       - name: verbose
