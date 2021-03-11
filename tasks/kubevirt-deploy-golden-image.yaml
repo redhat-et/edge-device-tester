@@ -118,7 +118,7 @@ spec:
               - ReadWriteOnce
               resources:
                 requests:
-                  storage: 10Gi
+                  storage: 20Gi
             source:
               http: 
                 url: $(params.diskimage)
