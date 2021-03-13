@@ -10,6 +10,9 @@ spec:
       - ref: test-ushift-deploys
       template:
         name: test-ushift-deploys
+      interceptors:
+        - cel:
+            filter: "body.ref.truncate(14) == 'refs/heads/o3s' || body.ref.truncate(15) == 'refs/heads/pods'"
 ---
 apiVersion: route.openshift.io/v1
 kind: Route
