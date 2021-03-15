@@ -92,6 +92,8 @@ spec:
       cat <<-EOF | tee $(cat $(results.mac-address.path)).yaml
       blueprint: ${GIT_REPO}
       ref: ${GIT_REF}
+      labels:
+        onwer: ci
       EOF
 
       VARIANT=${GIT_REF%%-*}
