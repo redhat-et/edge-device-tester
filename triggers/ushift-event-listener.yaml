@@ -12,7 +12,10 @@ spec:
         name: test-ushift-deploys
       interceptors:
         - cel:
-            filter: "body.ref.truncate(14) == 'refs/heads/o3s' || body.ref.truncate(15) == 'refs/heads/pods'"
+            filter: "body.ref.split('/')[2].truncate(3) == 'k3s' || body.ref.split('/')[2].truncate(3) == 'o3s' || body.ref.split('/')[2].truncate(4) == 'pods'"
+            overlays:
+            - key: branch_name
+              expression: "body.ref.split('/')[2]"
 ---
 apiVersion: route.openshift.io/v1
 kind: Route
