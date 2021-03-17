@@ -97,10 +97,10 @@ spec:
       EOF
 
       VARIANT=${GIT_REF%%-*}
-      if [[ ! "${VARIANT}" =~ ^(main|o3s|pods)$ ]]; then
+      if [[ ! "${VARIANT}" =~ ^(main|k3s|o3s|pods)$ ]]; then
         VARIANT="main"
       fi
-      echo -e "\nDetected base OS variant:"
+      echo -e "\n\nDetected base OS variant (based on ref ${GIT_REF}):"
       echo -n "${VARIANT}" | tee $(results.variant.path)
 
   - name: upload-registration
