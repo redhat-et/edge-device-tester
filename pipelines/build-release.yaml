@@ -8,6 +8,7 @@ spec:
   - name: workspace
   - name: secrets
   - name: aws-creds
+
   params:
   - name: url
     type: string
@@ -36,6 +37,7 @@ spec:
   - name: variant
     description: 'main, o3s or pods'
     type: string
+
   tasks:
   - name: fetch-configs
     taskRef:
@@ -53,6 +55,7 @@ spec:
     workspaces:
     - name: output
       workspace: workspace
+
   - name: build-image
     taskRef:
       name: run-image-builder
@@ -73,6 +76,7 @@ spec:
       workspace: secrets
     runAfter:
     - fetch-configs
+
   - name: s3-upload
     taskRef:
       name: s3-upload
@@ -94,6 +98,7 @@ spec:
       value: $(params.verbose)
     runAfter:
     - build-image
+
     workspaces:
     - name: output
       workspace: workspace

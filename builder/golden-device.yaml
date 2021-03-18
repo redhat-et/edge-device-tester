@@ -59,7 +59,7 @@ spec:
             storage: 10Gi
       source:
         http: 
-          url: "https://s3.eu-central-1.amazonaws.com/cdn.redhat.edge-lab.net/releases/fiot-main/latest/x86_64/fiot-main-installer.iso"
+          url: "http://cdn.redhat.edge-lab.net/releases/fiot-main/latest/x86_64/fiot-main-installer.iso"
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1

@@ -20,7 +20,7 @@ spec:
     - name: verbose
       value: 'true'
     - name: ip
-      value: fedorabuilder-vm
+      value: 10.128.2.7
     - name: variant
       value: 'o3s'
   serviceAccountName: pipeline

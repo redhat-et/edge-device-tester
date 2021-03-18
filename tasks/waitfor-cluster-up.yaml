@@ -36,7 +36,7 @@ spec:
         set -x
       fi
 
-      sleep 1800
+      sleep 18000
 
       exit 1
 

@@ -9,7 +9,7 @@ spec:
   params:
   - name: url
     value: >-
-      https://s3.eu-central-1.amazonaws.com/cdn.redhat.edge-lab.net/releases/fiot-o3s/latest/x86_64/fiot-o3s.img
+      http://cdn.redhat.edge-lab.net/releases/fiot-o3s/latest/x86_64/fiot-o3s.img
   - name: sha256_checksum
     value: ''
   - name: image

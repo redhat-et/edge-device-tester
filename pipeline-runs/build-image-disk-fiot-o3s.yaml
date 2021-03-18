@@ -8,7 +8,7 @@ spec:
     name: build-image-disk
   params:
     - name: diskimage
-      value: 'https://s3.eu-central-1.amazonaws.com/cdn.redhat.edge-lab.net/releases/fiot-o3s/latest/x86_64/fiot-o3s-installer.iso'
+      value: 'http://cdn.redhat.edge-lab.net/releases/fiot-o3s/latest/x86_64/fiot-o3s-installer.iso'
     - name: s3-bucket
       value: 'cdn.redhat.edge-lab.net'
     - name: s3-prefix
