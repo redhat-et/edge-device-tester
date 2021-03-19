@@ -103,6 +103,8 @@ spec:
     params:
     - name: ip
       value: $(tasks.deploy-device.results.ip)
+    - name: variant
+      value: $(tasks.register-device.results.variant)
     runAfter:
     - waitfor-ssh
     workspaces:

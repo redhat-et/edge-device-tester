@@ -19,6 +19,9 @@ spec:
     description: 'user to connect as'
     type: string
     default: 'redhat'
+  - name: variant
+    description: 'uShift variant to test'
+    type: string
   - name: verbose
     description: 'log the commands used during execution'
     type: string
@@ -36,9 +39,39 @@ spec:
         set -x
       fi
 
-      sleep 18000
+      SSH_OPTIONS="-i /tekton/home/ssh-key-pair/ssh-privatekey -o StrictHostKeyChecking=no"
+      SSH="ssh ${SSH_OPTIONS} -p $(params.port) $(params.user)@$(params.ip)"
 
-      exit 1
+      DATE_FMT="+%Y-%m-%d %H:%M:%S.%6N"
+
+      TEST_CMD="/var/opt/o3s/bin/o3s kubectl get pods -A 2>&1"
+
+      case "$(params.variant)" in
+        "o3s")
+          START_TIME=${SECONDS}
+          while true; do
+            RC=0
+            OUTPUT=$(${SSH} ${TEST_CMD}) || RC=$?
+
+            echo "$(date "${DATE_FMT}")  Waiting for cluster to come up ($((${SECONDS} - ${START_TIME}))s): [ret=${RC}]"
+            echo "${OUTPUT}"
+
+            if [ $RC -eq 0 ]; then
+              FAILED_PODS=$(echo \"${OUTPUT}\" | awk '{print $3}' | egrep -v -- "STATUS|Running|Complete")
+              if [ "${FAILED_PODS}" == "" ]; then
+                break
+              fi
+            fi
+
+            sleep 5
+          done
+          ;;
+        *)
+          sleep 600
+          ;;
+      esac
+
+      echo "$(date ${DATE_FMT}) Cluster is up ($((${SECONDS} - ${START_TIME}))s)."
 
   workspaces:
   - name: ssh-keys
