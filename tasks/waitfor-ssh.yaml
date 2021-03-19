@@ -53,7 +53,7 @@ spec:
         sleep 5
       done
 
-      echo "$(date ${DATE_FMT}) SSH available ($((${SECONDS} - ${START_TIME}))s)."
+      echo "$(date "${DATE_FMT}") SSH available ($((${SECONDS} - ${START_TIME}))s)."
 
 
   workspaces:

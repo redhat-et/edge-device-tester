@@ -71,7 +71,7 @@ spec:
           ;;
       esac
 
-      echo "$(date ${DATE_FMT}) Cluster is up ($((${SECONDS} - ${START_TIME}))s)."
+      echo "$(date "${DATE_FMT}") Cluster is up ($((${SECONDS} - ${START_TIME}))s)."
 
   workspaces:
   - name: ssh-keys
