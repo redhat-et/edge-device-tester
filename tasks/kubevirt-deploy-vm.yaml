@@ -71,10 +71,15 @@ spec:
 
       # if disk image includes a URL schema, assume we'll download it via a
       # DV, otherwise assume it names a container disk image
-      if [[ "$(params.diskimage)" =~ '://' ]]; then
-        cat <<-EOF >> disks
+      cat <<-EOF >> disks
       - name: rootdisk
         bootOrder: 1
+        disk:
+          bus: virtio
+      EOF
+      if [[ "$(params.diskimage)" =~ '://' ]]; then
+        cat <<-EOF >> volumes
+      - name: rootdisk
         dataVolume:
           name: $(params.name)-rootdisk
       EOF
@@ -99,12 +104,6 @@ spec:
                   $(params.diskimage)
       EOF
       else
-        cat <<-EOF >> disks
-      - name: rootdisk
-        bootOrder: 1
-        disk:
-          bus: virtio
-      EOF
         cat <<-EOF >> volumes
       - name: rootdisk
         containerDisk:
