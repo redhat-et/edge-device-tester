@@ -5,8 +5,9 @@ resources:
 - fetch-asset.yaml
 - generate-containerdisk-containerfile.yaml
 - kubevirt-deploy-vm.yaml
-- kubevirt-waitfor-ssh.yaml
 - register-device.yaml
 - run-image-builder.yaml
 - s3-upload.yaml
 - unregister-device.yaml
+- waitfor-cluster-up.yaml
+- waitfor-ssh.yaml

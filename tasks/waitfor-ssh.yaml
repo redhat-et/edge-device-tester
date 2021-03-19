@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: kubevirt-waitfor-ssh
+  name: waitfor-ssh
   namespace: edt
 spec:
   description: >-
@@ -36,19 +36,25 @@ spec:
         set -x
       fi
 
+      SSH_OPTIONS="-i /tekton/home/ssh-key-pair/ssh-privatekey -o StrictHostKeyChecking=no"
+      SSH="ssh ${SSH_OPTIONS} -p $(params.port) $(params.user)@$(params.ip)"
+
+      DATE_FMT="+%Y-%m-%d %H:%M:%S.%6N"
+
       START_TIME=${SECONDS}
       while true; do
-        RESULT=$(ssh \
-          -i /tekton/home/ssh-key-pair/ssh-privatekey \
-          -o StrictHostKeyChecking=no \
-          -p $(params.port) \
-          $(params.user)@$(params.ip) \
-          echo "ready" || true)
-        test "${RESULT}" = "ready" && break
+        RC=0
+        OUTPUT=$(${SSH} echo "ready") || RC=$?
+        test $RC -eq 0 && break
 
-        echo "Waiting for SSH to become available... ($((${SECONDS} - ${START_TIME}))s)"
+        echo "$(date "${DATE_FMT}")  Waiting for SSH to become available ($((${SECONDS} - ${START_TIME}))s): [ret=${RC}]"
+        echo "${OUTPUT}"
+
         sleep 5
       done
+
+      echo "$(date ${DATE_FMT}) SSH available ($((${SECONDS} - ${START_TIME}))s)."
+
 
   workspaces:
   - name: ssh-keys

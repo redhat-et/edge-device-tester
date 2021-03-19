@@ -85,7 +85,7 @@ spec:
 
   - name: waitfor-ssh
     taskRef:
-      name: kubevirt-waitfor-ssh
+      name: waitfor-ssh
       kind: Task
     params:
     - name: ip
