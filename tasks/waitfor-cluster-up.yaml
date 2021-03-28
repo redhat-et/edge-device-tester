@@ -44,7 +44,7 @@ spec:
 
       DATE_FMT="+%Y-%m-%d %H:%M:%S.%6N"
 
-      TEST_CMD="/var/opt/ushift/bin/o3s kubectl get pods -A 2>&1"
+      TEST_CMD="sudo /var/opt/ushift/bin/o3s kubectl get pods -A 2>&1"
 
       case "$(params.variant)" in
         "o3s")
